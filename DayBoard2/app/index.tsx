@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
-import { Calendar, Agenda } from 'react-native-calendars';
+import { Calendar, Agenda, CalendarList } from 'react-native-calendars';
 
 
 const MyCalendar = () => {
@@ -21,7 +21,9 @@ const MyCalendar = () => {
         markedDates={{
           [selectedDate]: { selected: true, marked: true, selectedColor: 'blue' }, 
         }}
-        onDayPress={(day) => { setSelectedDate(day.dateString); }} 
+        onDayPress={(day) => { setSelectedDate(day.dateString);
+        
+         }} 
       />
 
     <Agenda
@@ -34,6 +36,9 @@ const MyCalendar = () => {
         )} 
       />
 
+      <CalendarList>
+        
+      </CalendarList>
     </View>
   );
 }
