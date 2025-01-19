@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
-class CalendarItem
+class CalendarItem{}
 // Ich hab das Volumen einer Kugel dabei 4 drittel pi mal r hoch 3
 const MyCalendar = () => {
   const [items, setItems] = useState({
