@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Modal, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Modal, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
 class CalendarItem{}
@@ -67,6 +67,12 @@ const MyCalendar = () => {
         Press this to make something cololcd
       </Text>
 
+      <ScrollView
+      style={styles.scrollView}>
+          <Text>
+          </Text>
+      </ScrollView>
+
         <Modal
           animationType="slide"
           transparent={true}
@@ -132,6 +138,9 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
   },
+  scrollView: {
+    width: "100%"
+  }
 });
 
 export default MyCalendar;
