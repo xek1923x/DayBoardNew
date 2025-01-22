@@ -1,5 +1,5 @@
 import { Stack, Tabs } from "expo-router";
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import FontAwesome from '@expo/vector-icons/FontAwesomeIcon';
 import { View, Text} from "react-native";
 
 export default function RootLayout() {
@@ -16,21 +16,21 @@ export default function RootLayout() {
             name="aufgaben"
             options={{
                title: 'Aufgaben',
-               tabBarIcon: ({ color }) => <FontAwesome size={28} name="list-check" color={color} />
+               tabBarIcon: ({ color }) => <FontAwesomeIcon icon="fa-solid fa-list-check" />
             }}
          />
          <Tabs.Screen
             name="stundenplan"
             options={{
                title: 'Stundenplan',
-               tabBarIcon: ({ color }) => <FontAwesome size={28} icon="fa-solid fa-calendar" color={color} />
+               tabBarIcon: ({ color }) => <FontAwesomeIcon icon="fa-solid fa-calendar" />
             }}
          />
          <Tabs.Screen
-            name="stundenplan"
+            name="profile"
             options={{
-               title: 'Stundenplan',
-               tabBarIcon: ({ color }) => <FontAwesome size={28} icon="fa-solid fa-calendar" color={color} />
+               title: 'Profil',
+               tabBarIcon: ({ color }) => <FontAwesomeIcon icon="fa-solid fa-user" />
             }}
          />
       </Tabs>
