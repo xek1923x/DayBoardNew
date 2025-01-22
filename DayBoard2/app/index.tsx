@@ -3,7 +3,6 @@ import { View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
 class CalendarItem{}
-// Ich hab das Volumen einer Kugel dabei 4 drittel pi mal r hoch 3
 const MyCalendar = () => {
   const [items, setItems] = useState({
     '2024-04-29': [
@@ -25,6 +24,7 @@ const MyCalendar = () => {
   });
 
   const [selectedDate, setSelectedDate] = useState();
+  function setDayLongPress
 
   const markedDates = Object.keys(items).reduce((termine, date) => {
     termine[date] = {
@@ -48,6 +48,9 @@ const MyCalendar = () => {
         }}
         onDayPress={(day) => {
           setSelectedDate(day.dateString);
+        }}
+        onDayLongPress={(day) => {
+          
         }}
         firstDay={1}
         showWeekNumbers={false}
