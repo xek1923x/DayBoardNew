@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Modal, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Modal, Text, Pressable, StyleSheet, ScrollView, } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import Collapsible from 'react-native-collapsible';
 
 class CalendarItem{}
 const MyCalendar = () => {
@@ -63,14 +64,11 @@ const MyCalendar = () => {
         showWeekNumbers={false}
         enableSwipeMonths={true}
       />
-      <Text onPress={() => {setModalVisible(!modalVisible)}}>
-        Press this to make something cololcd
-      </Text>
+
 
       <ScrollView
       style={styles.scrollView}>
-          <Text>
-          </Text>
+
       </ScrollView>
 
         <Modal
@@ -81,15 +79,15 @@ const MyCalendar = () => {
             setModalVisible(!modalVisible);
           }}>
             <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <Text style={styles.modalText}>Hello World!</Text>
-              <Pressable
-                style={[styles.button, styles.buttonClose]}
-                onPress={() => setModalVisible(!modalVisible)}>
-                <Text style={styles.textStyle}>Hide Modal</Text>
-              </Pressable>
+              <View style={styles.modalView}>
+                <Text style={styles.modalText}>Hello World!</Text>
+                <Pressable
+                  style={[styles.button, styles.buttonClose]}
+                  onPress={() => setModalVisible(!modalVisible)}>
+                  <Text style={styles.textStyle}>Hide Modal</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
 
           </Modal>
     </View>
@@ -102,8 +100,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    width:'100%',
+    height:'100%',
   },
   modalView: {
+    width:'100%',
+    height:'100%',
     margin: 20,
     backgroundColor: 'white',
     borderRadius: 20,
@@ -140,6 +142,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     width: "100%"
+
   }
 });
 
