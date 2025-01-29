@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { View, Modal, Text, Pressable, StyleSheet, ScrollView, } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import Collapsible from 'react-native-collapsible';
+import Collapsible from "react-native-collapsible";
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Entypo from '@expo/vector-icons/Entypo';
+
 
 class CalendarItem{}
 const MyCalendar = () => {
@@ -68,7 +71,21 @@ const MyCalendar = () => {
 
       <ScrollView
       style={styles.scrollView}>
-
+        <Collapsible 
+        collapsed={false}
+        //style={styles.collapse}
+        //collapsedHeight={100}
+        >
+          <View>
+          <Text>
+            ajuofuioaeufaisuhudhfa
+          </Text>
+          
+            <Text>
+              jourfsthiozdfjdtgotzi
+            </Text>
+          </View>
+        </Collapsible>
       </ScrollView>
 
         <Modal
@@ -80,6 +97,7 @@ const MyCalendar = () => {
           }}>
             <View style={styles.centeredView}>
               <View style={styles.modalView}>
+              <Entypo size={28} name="cross" color="black" style={styles.cross} onPress={() => setModalVisible(!modalVisible)}/>
                 <Text style={styles.modalText}>Hello World!</Text>
                 <Pressable
                   style={[styles.button, styles.buttonClose]}
@@ -108,7 +126,6 @@ const styles = StyleSheet.create({
     height:'100%',
     margin: 20,
     backgroundColor: 'white',
-    borderRadius: 20,
     padding: 35,
     alignItems: 'center',
     shadowColor: '#000',
@@ -116,8 +133,6 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
     elevation: 5,
   },
   button: {
@@ -141,8 +156,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   scrollView: {
-    width: "100%"
+    width: "100%",
 
+  },
+  collapse: {
+    width: "100%",
+    height: "30%"
+    
+  },
+  cross: {
+    alignSelf: "flex-start"
   }
 });
 
