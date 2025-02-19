@@ -3,8 +3,8 @@ import { View, Modal, Text, Pressable, StyleSheet, ScrollView, } from 'react-nat
 import { Calendar } from 'react-native-calendars';
 import Collapsible from 'react-native-collapsible';
 
-class CalendarItem{}
-const MyCalendar = () => {
+
+export default function MyCalendar() {
   const [items, setItems] = useState({
     '2024-04-29': [
       { dots: [{ key: 'work', color: 'red', selectedDotColor: 'blue' }], name: 'Deutsch Arbeit', time: '10:00 AM' },
@@ -142,8 +142,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     width: "100%"
-
   }
 });
-
-export default MyCalendar;
+}
