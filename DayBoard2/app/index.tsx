@@ -1,10 +1,14 @@
+import { FontAwesome } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { View, Modal, Text, Pressable, StyleSheet, ScrollView, } from 'react-native';
+import { View, Modal, Text, Pressable, StyleSheet, ScrollView, TouchableOpacity,  TextInput } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Collapsible from 'react-native-collapsible';
 
 
 export default function MyCalendar() {
+  const [text, onChangeText] = React.useState('Useless Text');
+  const [number, onChangeNumber] = React.useState('');
+  
   const [items, setItems] = useState({
     '2024-04-29': [
       { dots: [{ key: 'work', color: 'red', selectedDotColor: 'blue' }], name: 'Deutsch Arbeit', time: '10:00 AM' },
@@ -25,7 +29,7 @@ export default function MyCalendar() {
   });
 
   const [modalVisible, setModalVisible] = useState(false);
-
+  const [modal2Visible, setModal2Visible] = useState(false);
 
   const markedDates = Object.keys(items).reduce((termine, date) => {
     termine[date] = {
@@ -34,6 +38,8 @@ export default function MyCalendar() {
     };
     return termine;
   }, {});
+
+
 
 
   const [selectedDate, setSelectedDate] = useState();
@@ -71,6 +77,9 @@ export default function MyCalendar() {
 
       </ScrollView>
 
+      <TouchableOpacity style={styles.addButton} onPress={() => {setModal2Visible(!modal2Visible)}}>
+         <FontAwesome name="plus" size={40}/>
+      </TouchableOpacity>
         <Modal
           animationType="slide"
           transparent={true}
@@ -86,6 +95,47 @@ export default function MyCalendar() {
                   onPress={() => setModalVisible(!modalVisible)}>
                   <Text style={styles.textStyle}>Hide Modal</Text>
                 </Pressable>
+              </View>
+            </View>
+
+          </Modal>
+
+          <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modal2Visible}
+          onRequestClose={() => {
+            setModal2Visible(!modal2Visible);
+          }}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
+              
+              <TouchableOpacity style={styles.closeButton} onPress={() => {setModal2Visible(!modal2Visible)}}>
+                <FontAwesome name="xmark" size={40}/>
+              </TouchableOpacity>
+
+              <TextInput
+                style={styles.input}
+                onChangeText={onChangeNumber}
+                value={number}
+                placeholder="Titel hinzufügen"
+                maxLength={40}
+              />
+
+              <View style={styles.buttonView}>
+                <TouchableOpacity style={[styles.weirdButton]}>
+                  <Text style={styles.weirdText}>Arbeit</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.weirdButton]}>
+                  <Text style={styles.weirdText}>Termin</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.weirdButton]}>
+                  <Text style={styles.weirdText}>Aufgabe</Text>
+                </TouchableOpacity>
+              </View>
+
               </View>
             </View>
 
@@ -108,16 +158,8 @@ const styles = StyleSheet.create({
     height:'100%',
     margin: 20,
     backgroundColor: 'white',
-    borderRadius: 20,
     padding: 35,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
     elevation: 5,
   },
   button: {
@@ -142,6 +184,36 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     width: "100%"
+  },
+  addButton: {
+    alignSelf:  "flex-end",
+    margin: 15,
+    backgroundColor: "lightblue",
+    borderRadius:30,
+    padding: 10,
+    paddingLeft: 15,
+    paddingRight: 15
+  },
+  input: {
+    height: 40,
+    margin: 12,
+    padding: 10,
+  },
+  closeButton: {
+    backgroundColor: '#2196F3',
+  },
+  buttonView: {
+     
+  },
+  weirdButton: {
+    borderRadius: 10,
+    padding: 10,
+    elevation: 2,
+    backgroundColor: "grey"
+  },
+  weirdText: {
+    color: 'black',
+    textAlign: "center",
+    backgroundColor: "grey"
   }
 });
-}
