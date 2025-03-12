@@ -1,13 +1,31 @@
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { View, Modal, Text, Pressable, StyleSheet, ScrollView, TouchableOpacity,  TextInput } from 'react-native';
+import { Animated ,View, Modal, Text, Pressable, StyleSheet, ScrollView, TouchableOpacity,  TextInput, TouchableWithoutFeedback } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import Collapsible from 'react-native-collapsible';
+import Accordion from 'react-native-collapsible';
 
 
 export default function MyCalendar() {
-  const [text, onChangeText] = React.useState('Useless Text');
   const [number, onChangeNumber] = React.useState('');
+  const [isCollapsedOne, setOpenedOne] = React.useState(true);
+  const [animation] = useState(new Animated.Value(0));
+
+  function toggleCollapsed() {
+      if (!isCollapsedOne){
+        Animated.timing(animation, {
+          toValue:  1,
+          duration:100,
+          useNativeDriver:false
+        }).start()
+      } else {
+        Animated.timing(animation, {
+            toValue: 0,
+            duration: 100,
+            useNativeDriver: false
+        }).start()
+      }
+      setOpenedOne(!isCollapsedOne)
+  }
   
   const [items, setItems] = useState({
     '2024-04-29': [
@@ -48,6 +66,11 @@ export default function MyCalendar() {
 
   }
 
+  
+  const heightAnimationInterpolation = animation.interpolate({
+    inputRange:[0, 1],
+    outputRange:[0, 100]
+  })
   return (
     <View style={{ flex: 1 }}>
       <Calendar
@@ -74,6 +97,25 @@ export default function MyCalendar() {
 
       <ScrollView
       style={styles.scrollView}>
+        <TouchableWithoutFeedback onPress={toggleCollapsed}>
+          <View>
+            <Text>
+              Aufgaben
+            </Text>
+            <FontAwesome name="circle"/>
+          </View>
+        </TouchableWithoutFeedback>
+
+        <Animated.View>
+          <Text>content</Text>
+        </Animated.View>
+
+        <Accordion collapsed={isCollapsedOne}>
+
+          <Text>
+            Test Text
+          </Text>
+        </Accordion>
 
       </ScrollView>
 
@@ -111,7 +153,7 @@ export default function MyCalendar() {
               <View style={styles.modalView}>
               
               <TouchableOpacity style={styles.closeButton} onPress={() => {setModal2Visible(!modal2Visible)}}>
-                <FontAwesome name="xmark" size={40}/>
+                <FontAwesome name="stop" size={40}/>
               </TouchableOpacity>
 
               <TextInput
