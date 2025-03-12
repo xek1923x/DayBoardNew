@@ -21,7 +21,7 @@ export default function RootLayout() {
             }}
          />
          <Tabs.Screen
-            name="stundenplan"
+            name="Stundenplan"
             options={{
                title: 'Stundenplan',
                tabBarIcon: ({ color }) => <FontAwesome size={25} name="calendar" color={color} />
