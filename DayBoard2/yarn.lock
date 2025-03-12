@@ -2271,6 +2271,11 @@
   dependencies:
     web-streams-polyfill "^3.1.1"
 
+"@rollup/rollup-linux-x64-gnu@4.34.9":
+  version "4.34.9"
+  resolved "https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.34.9.tgz"
+  integrity sha512-FwBHNSOjUTQLP4MG7y6rR6qbGw4MFeQnIBrMe161QGaQoBQLqSUEKlHIiVgF3g/mb3lxlxzJOpIBhaP+C+KP2A==
+
 "@segment/loosely-validate-event@^2.0.0":
   version "2.0.0"
   resolved "https://registry.npmjs.org/@segment/loosely-validate-event/-/loosely-validate-event-2.0.0.tgz"
@@ -2314,6 +2319,13 @@
   integrity sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==
   dependencies:
     "@sinonjs/commons" "^3.0.0"
+
+"@stencil/core@^4.0.3":
+  version "4.28.0"
+  resolved "https://registry.npmjs.org/@stencil/core/-/core-4.28.0.tgz"
+  integrity sha512-E7FwEoBQa3Mn39c2lZJVLcXnvGOJ+Sy1kJY/5LE30IO+MLqhCoAPxCIVbcOSN9OnvAMC+4ZveXGQp8bD2n6VFw==
+  optionalDependencies:
+    "@rollup/rollup-linux-x64-gnu" "4.34.9"
 
 "@tootallnate/once@2":
   version "2.0.0"
@@ -4481,6 +4493,11 @@ flow-parser@0.*:
   resolved "https://registry.npmjs.org/flow-parser/-/flow-parser-0.261.2.tgz"
   integrity sha512-RtunoakA3YjtpAxPSOBVW6lmP5NYmETwkpAfNkdr8Ovf86ENkbD3mtPWnswFTIUtRvjwv0i8ZSkHK+AzsUg1JA==
 
+fontawesome@^5.6.3:
+  version "5.6.3"
+  resolved "https://registry.npmjs.org/fontawesome/-/fontawesome-5.6.3.tgz"
+  integrity sha512-FCc+CawwsJWWprVEg9X14yI7zI+l9YVAyhzgu70qwGeDn0tLLDH/dVfqgij72g4BBGgLGfK2qnvFGAmYUkhaWg==
+
 fontfaceobserver@^2.1.0:
   version "2.3.0"
   resolved "https://registry.npmjs.org/fontfaceobserver/-/fontfaceobserver-2.3.0.tgz"
@@ -4963,6 +4980,13 @@ invariant@^2.2.4, invariant@2.2.4:
   integrity sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==
   dependencies:
     loose-envify "^1.0.0"
+
+ionicons@^7.4.0:
+  version "7.4.0"
+  resolved "https://registry.npmjs.org/ionicons/-/ionicons-7.4.0.tgz"
+  integrity sha512-ZK94MMqgzMCPPMhmk8Ouu6goyVHFIlw/ACP6oe3FrikcI0N7CX0xcwVaEbUc0G/v3W0shI93vo+9ve/KpvcNhQ==
+  dependencies:
+    "@stencil/core" "^4.0.3"
 
 ip-regex@^2.1.0:
   version "2.1.0"
@@ -5811,6 +5835,11 @@ lightningcss-linux-x64-gnu@1.27.0:
   version "1.27.0"
   resolved "https://registry.npmjs.org/lightningcss-linux-x64-gnu/-/lightningcss-linux-x64-gnu-1.27.0.tgz"
   integrity sha512-Dk/jovSI7qqhJDiUibvaikNKI2x6kWPN79AQiD/E/KeQWMjdGe9kw51RAgoWFDi0coP4jinaH14Nrt/J8z3U4A==
+
+lightningcss-linux-x64-musl@1.27.0:
+  version "1.27.0"
+  resolved "https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.27.0.tgz"
+  integrity sha512-QKjTxXm8A9s6v9Tg3Fk0gscCQA1t/HMoF7Woy1u68wCk5kS4fR+q3vXa1p3++REW784cRAtkYKrPy6JKibrEZA==
 
 lightningcss@~1.27.0:
   version "1.27.0"
@@ -7024,10 +7053,10 @@ react-is@^17.0.1:
   resolved "https://registry.npmjs.org/react-is/-/react-is-17.0.2.tgz"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
 
-react-native-calendars@^1.1307.0:
-  version "1.1307.0"
-  resolved "https://registry.npmjs.org/react-native-calendars/-/react-native-calendars-1.1307.0.tgz"
-  integrity sha512-Fl9NxPgkXw6aboGOifER8Np+p8im753IUGh1sOy7eMuDAP+x5fSDw1K5GnChdVAKWAdLfsNWFIyYehHChf5vmw==
+react-native-calendars@^1.1310.0:
+  version "1.1310.0"
+  resolved "https://registry.npmjs.org/react-native-calendars/-/react-native-calendars-1.1310.0.tgz"
+  integrity sha512-QTcxBDZRLVmoDriQD6vbRXiQ9bMEVtU8Hs7bGC3uJx6fIn+uVcx2V5liry0IwLLiu3tv1V5IHgQ2W/QYDzhMpA==
   dependencies:
     hoist-non-react-statics "^3.3.1"
     lodash "^4.17.15"
@@ -7199,7 +7228,7 @@ react-test-renderer@18.3.1:
     react-shallow-renderer "^16.15.0"
     scheduler "^0.23.2"
 
-react@*, "react@^16.0.0 || ^17.0.0 || ^18.0.0", "react@^16.6.0 || ^17.0.0 || ^18.0.0", "react@^16.8 || ^17.0 || ^18.0", "react@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", react@^18.0.0, react@^18.2.0, react@^18.3.1, "react@>= 15.2.1", "react@>= 18.2.0", react@>=16.8, react@>=17.0.0, react@>=18.2.0, react@18.3.1:
+react@*, "react@^16.0.0 || ^17.0.0 || ^18.0.0", "react@^16.6.0 || ^17.0.0 || ^18.0.0", "react@^16.8 || ^17.0 || ^18.0", "react@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", react@^18.0.0, react@^18.2.0, react@^18.3.1, "react@>= 15.2.1", "react@>= 18.2.0", react@>=16.8, react@>=17.0.0, react@>=18.2.0:
   version "18.3.1"
   resolved "https://registry.npmjs.org/react/-/react-18.3.1.tgz"
   integrity sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==
