@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, Button  } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Button, ScrollView} from 'react-native';
 import { useState, useEffect } from 'react';
 import { Table, TableWrapper, Row, Cell } from 'react-native-table-component';
 
@@ -31,6 +31,7 @@ const App = () => {
   }, []);
 
   return(
+ 
     <View style={styles.container}>
       <Text>Klasse</Text>
       <TextInput
@@ -42,10 +43,14 @@ const App = () => {
           onPress={fetchPost}
           title="Vertretungsplan laden"
         />
+        
         <Table borderStyle={{borderColor: 'transparent'}}>
+        
           <Row data={state.tableHead} style={styles.head} textStyle={styles.text}/>
+          <ScrollView>
           {
             posts.map(rowData => (
+             
               <TableWrapper key={rowData.lesson} style={styles.row}>                  
                     <Cell data={rowData.date} textStyle={styles.text}/>
                     <Cell data={rowData.type} textStyle={styles.text}/>
@@ -54,10 +59,14 @@ const App = () => {
                     <Cell data={rowData.subject} textStyle={styles.text}/>
                     <Cell data={rowData.old_teacher} textStyle={styles.text}/>
               </TableWrapper>
+             
             ))
           }
+         </ScrollView>
         </Table>
+        
       </View>
+     
     );
 }
 
