@@ -10,6 +10,8 @@ export default function MyCalendar() {
   const [isCollapsedOne, setOpenedOne] = React.useState(true);
   const [isCollapsedTwo, setOpenedTwo] = React.useState(true);
   const [animation] = useState(new Animated.Value(0));
+  const [iconOne, setIconOne] = React.useState("chevron-down");
+  const [iconTwo, setIconTwo] = React.useState("chevron-down");
 
   function toggleCollapsed() {
       if (!isCollapsedOne){
@@ -26,6 +28,11 @@ export default function MyCalendar() {
         }).start()
       }
       setOpenedOne(!isCollapsedOne)
+      if (iconOne	== "chevron-down") {
+        setIconOne("chevron-up")
+      } else{
+        setIconOne("chevron-down")
+      }
   }
 
   function toggleCollapsedTwo() {
@@ -43,7 +50,13 @@ export default function MyCalendar() {
       }).start()
     }
     setOpenedTwo(!isCollapsedTwo)
+    if (iconTwo	== "chevron-down") {
+      setIconTwo("chevron-up")
+    } else{
+      setIconTwo("chevron-down")
+    }
 }
+
 
   
   
@@ -87,6 +100,8 @@ export default function MyCalendar() {
   }
 
   
+
+  
   const heightAnimationInterpolation = animation.interpolate({
     inputRange:[0, 1],
     outputRange:[0, 100]
@@ -117,21 +132,25 @@ export default function MyCalendar() {
 
       <ScrollView
       style={styles.scrollView}>
-        <TouchableWithoutFeedback onPress={toggleCollapsed}>
-          <View style={styles.nextToView}>
-            <Text style={styles.flexElement}>
-              Aufgaben
-            </Text>
-            <FontAwesome name="chevron-down" style={styles.flexElement}/>
-          </View>
-        </TouchableWithoutFeedback>
+        <View style={styles.coolView}>
+          <TouchableWithoutFeedback onPress={toggleCollapsed}>
+            <View style={styles.nextToView}>
+              <Text style={styles.flexElement}>
+                Aufgaben
+              </Text>
+              <FontAwesome name={iconOne} style={styles.flexElement}/>
+            </View>
+          </TouchableWithoutFeedback>
 
-        <Accordion collapsed={isCollapsedOne}>
-
-          <Text>
-            Test Text
-          </Text>
-        </Accordion>
+          <Accordion collapsed={isCollapsedOne}>
+            <View>
+              <Task text={"Task 1"} /> 
+              <Task text={"Task 2"} />
+              <Task text={"Task 2"} />
+              <Task text={"Task 2"} /> 
+            </View>
+          </Accordion>
+        </View>
 
 
         <TouchableWithoutFeedback onPress={toggleCollapsedTwo}>
@@ -139,7 +158,7 @@ export default function MyCalendar() {
             <Text style={styles.flexElement}>
               Arbeiten
             </Text>
-            <FontAwesome name="chevron-down" style={styles.flexElement}/>
+            <FontAwesome name={iconTwo} style={styles.flexElement}/>
           </View>
         </TouchableWithoutFeedback>
 
@@ -157,7 +176,7 @@ export default function MyCalendar() {
          <FontAwesome name="plus" size={40}/>
       </TouchableOpacity>
         <Modal
-          animationType="slide"
+          animationType="slide"                                                 
           transparent={true}
           visible={modalVisible}
           onRequestClose={() => {
@@ -219,6 +238,22 @@ export default function MyCalendar() {
     </View>
   );
 };
+
+type TaskProps = {
+  text: string;
+};
+
+export function Task({ text }: TaskProps) {
+    return (
+        <View style={styles.item}>
+          <View style={styles.itemLeft}>
+            <View style={styles.square}></View>
+            <Text style={styles.itemText}>{text}</Text>
+          </View>
+          <View style={styles.circular}></View>
+        </View>
+    );
+}
 
 
 const styles = StyleSheet.create({
@@ -293,13 +328,68 @@ const styles = StyleSheet.create({
     backgroundColor: "grey"
   },
   nextToView: {
+    backgroundColor: '#FFF',
+    padding: 15,
+    borderRadius: 10,
     flexDirection: 'row',
-    backgroundColor:  'white',
-    borderRadius: 10
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop:  20
+    
+  },
+  coolView: {
   },
   flexElement: {
+
+  },
+
+
+
+
+  container: {
     flex: 1,
-    alignSelf: 'flex-start',
-    fontStyle: 'normal',
-  }
+    backgroundColor: '#E8EAED',
+},
+tasksWrapper: {
+    paddingTop: 40,
+    paddingHorizontal: 20,
+},
+sectionTitle: {
+    paddingBottom: 15,
+    fontSize: 24,
+    fontWeight: 'bold',
+},
+items: {},
+item: {
+    backgroundColor: '#FFF',
+    padding: 15,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+},
+itemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap'
+},
+square: {
+    width: 24,
+    height: 24,
+    backgroundColor: '#55BCF6',
+    opacity: 0.4,
+    borderRadius: 5,
+    marginRight: 15,
+},
+itemText: {
+    maxWidth: '80%',
+},
+circular: {
+    width: 12,
+    height: 12,
+    borderColor: '#55BCF6',
+    borderWidth: 2,
+    borderRadius: 5,
+},
 });
