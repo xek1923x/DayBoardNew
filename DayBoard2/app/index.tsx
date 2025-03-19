@@ -8,6 +8,7 @@ import Accordion from 'react-native-collapsible';
 export default function MyCalendar() {
   const [number, onChangeNumber] = React.useState('');
   const [isCollapsedOne, setOpenedOne] = React.useState(true);
+  const [isCollapsedTwo, setOpenedTwo] = React.useState(true);
   const [animation] = useState(new Animated.Value(0));
 
   function toggleCollapsed() {
@@ -26,6 +27,25 @@ export default function MyCalendar() {
       }
       setOpenedOne(!isCollapsedOne)
   }
+
+  function toggleCollapsedTwo() {
+    if (!isCollapsedTwo){
+      Animated.timing(animation, {
+        toValue:  1,
+        duration:100,
+        useNativeDriver:false
+      }).start()
+    } else {
+      Animated.timing(animation, {
+          toValue: 0,
+          duration: 100,
+          useNativeDriver: false
+      }).start()
+    }
+    setOpenedTwo(!isCollapsedTwo)
+}
+
+  
   
   const [items, setItems] = useState({
     '2024-04-29': [
@@ -98,17 +118,13 @@ export default function MyCalendar() {
       <ScrollView
       style={styles.scrollView}>
         <TouchableWithoutFeedback onPress={toggleCollapsed}>
-          <View>
-            <Text>
+          <View style={styles.nextToView}>
+            <Text style={styles.flexElement}>
               Aufgaben
             </Text>
-            <FontAwesome name="circle"/>
+            <FontAwesome name="chevron-down" style={styles.flexElement}/>
           </View>
         </TouchableWithoutFeedback>
-
-        <Animated.View>
-          <Text>content</Text>
-        </Animated.View>
 
         <Accordion collapsed={isCollapsedOne}>
 
@@ -116,6 +132,24 @@ export default function MyCalendar() {
             Test Text
           </Text>
         </Accordion>
+
+
+        <TouchableWithoutFeedback onPress={toggleCollapsedTwo}>
+          <View style={styles.nextToView}>
+            <Text style={styles.flexElement}>
+              Arbeiten
+            </Text>
+            <FontAwesome name="chevron-down" style={styles.flexElement}/>
+          </View>
+        </TouchableWithoutFeedback>
+
+        <Accordion collapsed={isCollapsedTwo}>
+
+          <Text>
+            Test Text
+          </Text>
+        </Accordion>
+
 
       </ScrollView>
 
@@ -257,5 +291,15 @@ const styles = StyleSheet.create({
     color: 'black',
     textAlign: "center",
     backgroundColor: "grey"
+  },
+  nextToView: {
+    flexDirection: 'row',
+    backgroundColor:  'white',
+    borderRadius: 10
+  },
+  flexElement: {
+    flex: 1,
+    alignSelf: 'flex-start',
+    fontStyle: 'normal',
   }
 });
