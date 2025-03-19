@@ -10,7 +10,7 @@ export default function RootLayout() {
             name="index"
             options={{
                title: 'Home',
-               tabBarIcon: ({ color }) => <FontAwesome size={25} name="home" color={color} />
+               tabBarIcon: ({ color}) => <FontAwesome size={25} name="home" color={color} />
             }}
          />
          <Tabs.Screen
@@ -20,11 +20,12 @@ export default function RootLayout() {
                tabBarIcon: ({ color }) => <FontAwesome size={25} name="check" color={color} />
             }}
          />
-         <Tabs.Screen
+
+          <Tabs.Screen
             name="Stundenplan"
             options={{
                title: 'Stundenplan',
-               tabBarIcon: ({ color }) => <FontAwesome size={25} name="calendar" color={color} />
+               tabBarIcon: ({ color }) => <FontAwesome size={25} name="table" color={color} />
             }}
          />
          <Tabs.Screen
@@ -34,6 +35,7 @@ export default function RootLayout() {
                tabBarIcon: ({ color }) => <FontAwesome size={25} name="user" color={color} />
             }}
          />
+        
       </Tabs>
    );
 }
