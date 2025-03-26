@@ -2,7 +2,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { View, Modal, Text, Pressable, StyleSheet, ScrollView, TouchableOpacity,  TextInput } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import Collapsible from 'react-native-collapsible';
+import collapsible from 'react-native-collapsible';
 
 
 export default function MyCalendar() {

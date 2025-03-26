@@ -33,7 +33,7 @@ const App = () => {
   return(
  
     <View style={styles.container}>
-      <Text>Klasse</Text>
+      <Text>Klasse/Lehrerkürzel</Text>
       <TextInput
           style={styles.input}
           onChangeText={onTextChange}
