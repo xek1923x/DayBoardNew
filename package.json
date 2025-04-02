@@ -1,5 +1,9 @@
 {
   "dependencies": {
+
+    "expo": "^52.0.38",
+    "react-native-ui-devkit": "^2.0.8",
     "react-native-table-component": "^1.2.2"
+
   }
 }
