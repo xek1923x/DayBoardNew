@@ -1,9 +1,14 @@
-import { View, Modal, Keyboard, Text, Pressable, StyleSheet, ScrollView, TouchableOpacity, TouchableNativeFeedback } from 'react-native';
+import { SafeAreaView, View, Modal, Keyboard, Text, Pressable, StyleSheet, ScrollView, TouchableOpacity, TouchableNativeFeedback } from 'react-native';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import Button from 'expo-router'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import React, { useState } from "react";
+import { endAsyncEvent } from 'react-native/Libraries/Performance/Systrace';
+import { buildUnavailableHoursBlocks } from 'react-native-calendars/src/timeline/Packer';
 
 export default function Aufgaben() {
+    const [showModal, setshowModal] = useState(false);
     return (
         <View style={styles.container}>
             <ScrollView
@@ -18,15 +23,24 @@ export default function Aufgaben() {
                     
                         <Task text={"Task 1"} /> 
                         <Task text={"Task 2"} />
-                        <Task text={"Task 2"} />
-                        <Task text={"Task 2"} /> 
+                        <Task text={"Task 3"} />
+                        <Task text={"Task 4"} /> 
                         
                     </ScrollView>
                 </View>
             </ScrollView>
-            <View style={styles.plusIcon}>
+            <TouchableOpacity style={styles.plusIcon} onPress={() => setshowModal(!showModal)}>
                 <FontAwesome name="plus-circle" size={60} color="black" />
-            </View>
+            </TouchableOpacity>
+            <Modal visible={showModal} animationType='slide' presentationStyle='pageSheet' style={styles.centeredView}>
+                <SafeAreaView>
+                    <View>
+                        <TouchableOpacity onPress={() => setshowModal(!showModal)} style={styles.buttonClose}>
+                            <Text style={{color: 'mediumblue', margin: 20, fontSize: 17.5}}>Close</Text>
+                        </TouchableOpacity>
+                    </View> 
+                </SafeAreaView>
+            </Modal>
         </View>
     )
 }
@@ -38,10 +52,10 @@ type TaskProps = {
 export function Task({ text }: TaskProps) {
     const [iconVisible, setIconVisible] = useState(false);
     return (
+        <TouchableOpacity onPress={() => setIconVisible(!iconVisible)}>
         <View style={styles.item}>
           <View style={styles.itemLeft}>
             <View>
-                #!iconVisible turns to the other condition
                 <TouchableOpacity style={styles.square} onPress={() => setIconVisible(!iconVisible)}>
                     {iconVisible ? <Ionicons name="checkmark" size={24} color="black" /> : null}
                 </TouchableOpacity>
@@ -51,10 +65,22 @@ export function Task({ text }: TaskProps) {
           </View>
           <View style={styles.circular}></View>
         </View>
+        </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
+    buttonClose: {
+        color: 'blue',
+        visibility: 'visible',
+
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignContent: 'center',
+    },
     container: {
         flex: 1,
         backgroundColor: '#E8EAED',
