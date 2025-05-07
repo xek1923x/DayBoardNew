@@ -1,4 +1,4 @@
-import { SafeAreaView, View, Modal, Keyboard, Text, Pressable, StyleSheet, ScrollView, TouchableOpacity, TouchableNativeFeedback } from 'react-native';
+import { SafeAreaView, View, Modal, Keyboard, Text, Pressable, StyleSheet, ScrollView, TouchableOpacity, TouchableNativeFeedback, TextInput } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Button from 'expo-router'
@@ -38,7 +38,11 @@ export default function Aufgaben() {
                         <TouchableOpacity onPress={() => setshowModal(!showModal)} style={styles.buttonClose}>
                             <Text style={{color: 'mediumblue', margin: 20, fontSize: 17.5}}>Close</Text>
                         </TouchableOpacity>
-                    </View> 
+                    </View>
+                    <View style={styles.addTasksWrapper}>
+                        <Text style={styles.sectionTitle}>Neue Aufgabe hinzufügen</Text>
+                        <TextInput style={styles.input}></TextInput>
+                    </View>
                 </SafeAreaView>
             </Modal>
         </View>
@@ -70,10 +74,15 @@ export function Task({ text }: TaskProps) {
 }
 
 const styles = StyleSheet.create({
+    input: {
+        height: 40,
+        margin: 12,
+        borderWidth: 1,
+        padding: 10,
+    },
     buttonClose: {
         color: 'blue',
         visibility: 'visible',
-
     },
     centeredView: {
         flex: 1,
@@ -87,6 +96,10 @@ const styles = StyleSheet.create({
     },
     tasksWrapper: {
         paddingTop: 40,
+        paddingHorizontal: 20,
+    },
+    addTasksWrapper: {
+        paddingTop: 20,
         paddingHorizontal: 20,
     },
     sectionTitle: {
