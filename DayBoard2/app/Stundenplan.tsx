@@ -44,7 +44,7 @@ const App = () => {
           title="Vertretungsplan laden"
         />
         
-        <Table borderStyle={{borderColor: 'transparent'}}>
+        <Table borderStyle={{borderWith: 3, borderColor: '#c8e1ff'}}>
         
           <Row data={state.tableHead} style={styles.head} textStyle={styles.text}/>
           <ScrollView>
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   head: { height: 40, backgroundColor: '#808B97' },
   text: { margin: 6 },
   row: { flexDirection: 'row', backgroundColor: '#FFF1C1' },
-  btn: { width: 58, height: 18, backgroundColor: '#78B7BB',  borderRadius: 2 },
+  btn: { width: 58, height: 18, backgroundColor: '#78B7BB',  borderRadius: 5 },
   btnText: { textAlign: 'center', color: '#fff' },
   input: { height: 40, margin: 12, borderWidth: 1, padding: 10}
 });
