@@ -8,6 +8,9 @@ import collapsible from 'react-native-collapsible';
 export default function MyCalendar() {
   const [text, onChangeText] = React.useState('Useless Text');
   const [number, onChangeNumber] = React.useState('');
+  const [content, onChangeContent] = React.useState('');
+
+
   
   const [items, setItems] = useState({
     '2024-04-29': [
@@ -46,6 +49,12 @@ export default function MyCalendar() {
   function setDayLongPress(day) {
       setModalVisible(!modalVisible);
 
+  }
+
+
+
+  function createNew() {
+    
   }
 
   return (
@@ -120,7 +129,20 @@ export default function MyCalendar() {
                 value={number}
                 placeholder="Titel hinzufügen"
                 maxLength={40}
+                
               />
+
+              <TextInput
+              
+                style={styles.input}
+                onChangeText={onChangeContent}
+                value={content}
+                placeholder="Inhalt hinzufügen"
+                maxLength={40}
+              
+              >
+
+              </TextInput>
 
               <View style={styles.buttonView}>
                 <TouchableOpacity style={[styles.weirdButton]}>
@@ -135,6 +157,10 @@ export default function MyCalendar() {
                   <Text style={styles.weirdText}>Aufgabe</Text>
                 </TouchableOpacity>
               </View>
+
+              <TouchableOpacity style={[styles.weirdButton]} onPress={() => createNew()}>
+                <Text style={styles.weirdText}>Erstellen</Text>
+              </TouchableOpacity>
 
               </View>
             </View>
