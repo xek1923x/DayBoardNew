@@ -29,6 +29,9 @@ export default function MyCalendar() {
       { name: 'Digitechnikum', time: '8:00 AM' },
       { name: 'Big Band', time: '3:00 PM' }
     ],
+    '2025-06-11': [
+      { dots: [{ key: 'work', color: 'red', selectedDotColor: 'blue' }], name: 'Digitechnikum', time: '8:00 AM' }
+    ]
   });
 
   const [modalVisible, setModalVisible] = useState(false);
