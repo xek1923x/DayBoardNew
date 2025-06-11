@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
@@ -38,12 +37,25 @@ export default function Stundenplan() {
     fetchEntries();
   }, []);
 
-  // Filter by class and teacher locally
+  
   const filteredEntries = entries.filter(item => {
     const matchesClass = klassFilter === '' || item.class.toLowerCase().includes(klassFilter.toLowerCase());
     const matchesTeacher = teacherFilter === '' || item.old_teacher.toLowerCase().includes(teacherFilter.toLowerCase());
     return matchesClass && matchesTeacher;
   });
+
+  
+  const typeColors = {
+    Vertretung: '#FFE4E1',
+    'Eigenverantwortliches Arbeiten': '#FFFACD',
+    'Raum-Vtr.': '#E0FFFF',
+    'Betreuung' : '#F0FFF0',
+    'Unterricht geändert': '#EDE7F6',
+    'Veranst.': '#FFF5EE',
+    'TrotzAbsenz': '#F0F8FF',
+    'Klausur': '#FFDAB9',
+    default: '#FFFFFF',
+  };
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
@@ -67,32 +79,22 @@ export default function Stundenplan() {
         placeholder="Lehrerkürzel"
         placeholderTextColor="#666"
       />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => {
-          // Filters applied automatically
-        }}
-      >
-        <Text style={styles.buttonText}>Filtern</Text>
-      </TouchableOpacity>
     </View>
   );
 
-  const renderItem = ({ item, index }) => (
-    <View
-      style={[
-        styles.row,
-        index % 2 === 0 ? styles.rowEven : styles.rowOdd,
-      ]}
-    >
-      <Text style={styles.cell}>{item.date}</Text>
-      <Text style={styles.cell}>{item.type}</Text>
-      <Text style={styles.cell}>{item.class}</Text>
-      <Text style={styles.cell}>{item.lesson}</Text>
-      <Text style={styles.cell}>{item.subject}</Text>
-      <Text style={styles.cell}>{item.old_teacher}</Text>
-    </View>
-  );
+  const renderItem = ({ item }) => {
+    const bgColor = typeColors[item.type] || typeColors.default;
+    return (
+      <View style={[styles.row, { backgroundColor: bgColor }]}>        
+        <Text style={styles.cell}>{item.date}</Text>
+        <Text style={styles.cell}>{item.type}</Text>
+        <Text style={styles.cell}>{item.class}</Text>
+        <Text style={styles.cell}>{item.lesson}</Text>
+        <Text style={styles.cell}>{item.subject}</Text>
+        <Text style={styles.cell}>{item.old_teacher}</Text>
+      </View>
+    );
+  };
 
   const renderTableHeader = () => (
     <View style={styles.tableHeader}>
@@ -154,7 +156,7 @@ const styles = StyleSheet.create({
   controls: {
     flexDirection: 'row',
     margin: 16,
-    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   input: {
     flex: 1,
@@ -168,21 +170,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
-  },
-  button: {
-    backgroundColor: '#4F6D7A',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
-  },
-  buttonText: {
-    color: '#FFF',
-    fontWeight: '600',
   },
   loader: {
     marginTop: 20,
@@ -205,12 +192,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 12,
     paddingHorizontal: 8,
-  },
-  rowEven: {
-    backgroundColor: '#FFFFFF',
-  },
-  rowOdd: {
-    backgroundColor: '#E8EEF4',
+    borderRadius: 4,
+    marginVertical: 4,
+    marginHorizontal: 8,
   },
   cell: {
     flex: 1,
