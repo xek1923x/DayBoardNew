@@ -14,14 +14,16 @@ import {
 
 export default function Stundenplan() {
   const [entries, setEntries] = useState([]);
-  const [klass, setKlass] = useState('7a');
+  const [klassFilter, setKlassFilter] = useState('');
+  const [teacherFilter, setTeacherFilter] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Fetch all entries once
   const fetchEntries = async () => {
     setLoading(true);
     try {
       const res = await fetch(
-        `https://dsb-app-363581125799.europe-west3.run.app/entries?class=${klass}`
+        'https://dsb-app-363581125799.europe-west3.run.app/entries'
       );
       const data = await res.json();
       setEntries(data);
@@ -36,6 +38,13 @@ export default function Stundenplan() {
     fetchEntries();
   }, []);
 
+  // Filter by class and teacher locally
+  const filteredEntries = entries.filter(item => {
+    const matchesClass = klassFilter === '' || item.class.toLowerCase().includes(klassFilter.toLowerCase());
+    const matchesTeacher = teacherFilter === '' || item.old_teacher.toLowerCase().includes(teacherFilter.toLowerCase());
+    return matchesClass && matchesTeacher;
+  });
+
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       <Text style={styles.headerText}>Vertretungsplan</Text>
@@ -46,13 +55,25 @@ export default function Stundenplan() {
     <View style={styles.controls}>
       <TextInput
         style={styles.input}
-        value={klass}
-        onChangeText={setKlass}
-        placeholder="Klasse oder Lehrerkürzel"
+        value={klassFilter}
+        onChangeText={setKlassFilter}
+        placeholder="Klasse (z.B. 7a)"
         placeholderTextColor="#666"
       />
-      <TouchableOpacity style={styles.button} onPress={fetchEntries}>
-        <Text style={styles.buttonText}>Laden</Text>
+      <TextInput
+        style={styles.input}
+        value={teacherFilter}
+        onChangeText={setTeacherFilter}
+        placeholder="Lehrerkürzel"
+        placeholderTextColor="#666"
+      />
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => {
+          // Filters applied automatically
+        }}
+      >
+        <Text style={styles.buttonText}>Filtern</Text>
       </TouchableOpacity>
     </View>
   );
@@ -75,7 +96,7 @@ export default function Stundenplan() {
 
   const renderTableHeader = () => (
     <View style={styles.tableHeader}>
-      {['Datum','Art','Klasse','Stunde','Fach','Lehrer'].map((title) => (
+      {['Datum','Art','Klasse','Stunde','Fach','Lehrer'].map(title => (
         <Text key={title} style={styles.headerCell}>
           {title}
         </Text>
@@ -95,7 +116,7 @@ export default function Stundenplan() {
           <ActivityIndicator size="large" style={styles.loader} />
         ) : (
           <FlatList
-            data={entries}
+            data={filteredEntries}
             keyExtractor={(item, idx) => `${item.lesson}-${idx}`}
             ListHeaderComponent={renderTableHeader}
             stickyHeaderIndices={[0]}
