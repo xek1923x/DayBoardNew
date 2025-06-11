@@ -20,6 +20,17 @@ export default function MyCalendar() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modal2Visible, setModal2Visible] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [selectedType, setSelectedType] = useState(null);
+
+  const typeColorMap = {
+  Arbeit: '#007AFF',   // Blue
+  Termin: '#FF9500',   // Orange
+  Aufgabe: '#34C759',  // Green
+};
+
+
+
 
   // Save events to secure storage
   async function save(key, value) {
@@ -48,25 +59,57 @@ export default function MyCalendar() {
   }, []);
 
   // Handle creating a new event
-  function createNew() {
-    if (!selectedDate || !number) return;
+function createNew() {
+  setSelectedType(null);
+  if (!selectedDate || !number) return;
 
-    const newItem = { name: number, time: content };
+  const newItem = { name: number, time: content, type: selectedType };
+  const updatedItems = { ...items };
 
-    const updatedItems = { ...items };
-    if (!updatedItems[selectedDate]) {
-      updatedItems[selectedDate] = [];
-    }
-
-    updatedItems[selectedDate].push(newItem);
-    setItems(updatedItems);
-    save('Termine', updatedItems);
-
-    // Reset modal and inputs
-    setModal2Visible(false);
-    onChangeNumber('');
-    onChangeContent('');
+  if (!updatedItems[selectedDate]) {
+    updatedItems[selectedDate] = [];
   }
+
+  if (editingIndex !== null) {
+    // Update existing event
+    updatedItems[selectedDate][editingIndex] = newItem;
+  } else {
+    // Add new event
+    updatedItems[selectedDate].push(newItem);
+  }
+
+  setItems(updatedItems);
+  save('Termine', updatedItems);
+
+  // Reset modal and inputs
+  setModal2Visible(false);
+  onChangeNumber('');
+  onChangeContent('');
+  setEditingIndex(null);
+}
+
+  function handleEditEvent(index) {
+  if (!selectedDate) return;
+  const eventToEdit = items[selectedDate][index];
+  onChangeNumber(eventToEdit.name);
+  onChangeContent(eventToEdit.time);
+  setModal2Visible(true);
+  setSelectedType(eventToEdit.type);
+
+  // Save the index being edited in state
+  setEditingIndex(index);
+}
+
+// Delete event from the list
+function handleDeleteEvent(index) {
+  if (!selectedDate) return;
+  const updatedEvents = [...items[selectedDate]];
+  updatedEvents.splice(index, 1); // remove one item at index
+
+  const updatedItems = { ...items, [selectedDate]: updatedEvents };
+  setItems(updatedItems);
+  save('Termine', updatedItems);
+}
 
   // Show modal on long press
   function setDayLongPress(day) {
@@ -77,18 +120,15 @@ export default function MyCalendar() {
 const markedDates = Object.entries(items).reduce((acc, [date, events]) => {
   const dots = [];
 
-  events.forEach(event => {
-    if (event.dots) {
-      event.dots.forEach(dot => {
-        if (!dots.find(d => d.key === dot.key)) {
-          dots.push(dot);
-        }
-      });
-    }
+  events.forEach((event, index) => {
+    const color = typeColorMap[event.type] || '#ccc'; // fallback color
+    const key = `${event.type}-${index}`; // unique key per event
+
+    dots.push({ key, color });
   });
 
   acc[date] = {
-    marked: dots.length > 0,
+    marked: true,
     dots,
   };
 
@@ -124,18 +164,34 @@ const markedDates = Object.entries(items).reduce((acc, [date, events]) => {
 
 
       <ScrollView style={styles.scrollView}>
-  {items[selectedDate]?.length > 0 ? (
-    items[selectedDate].map((event, index) => (
-      <View key={index} style={styles.eventItem}>
+{items[selectedDate]?.length > 0 ? (
+  items[selectedDate].map((event, index) => (
+    <View key={index} style={styles.eventItemRow}>
+      <View style={{ flex: 1 }}>
         <Text style={styles.eventTitle}>{event.name}</Text>
         <Text>{event.time}</Text>
       </View>
-    ))
-  ) : (
-    <Text style={{ padding: 10, fontStyle: 'italic' }}>
-      No events for this day.
-    </Text>
-  )}
+      <View style={styles.eventButtons}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => handleEditEvent(index)}
+        >
+          <Text style={styles.buttonText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDeleteEvent(index)}
+        >
+          <Text style={styles.buttonText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  ))
+) : (
+  <Text style={{ padding: 10, fontStyle: 'italic' }}>
+    No events for this day.
+  </Text>
+)}
 </ScrollView>
 
       <TouchableOpacity
@@ -192,7 +248,7 @@ const markedDates = Object.entries(items).reduce((acc, [date, events]) => {
                 setModal2Visible(false);
               }}
             >
-              <FontAwesome name="xmark" size={40} />
+              <FontAwesome name="close" size={20} />
             </TouchableOpacity>
 
             <TextInput
@@ -212,18 +268,18 @@ const markedDates = Object.entries(items).reduce((acc, [date, events]) => {
             />
 
             <View style={styles.buttonView}>
-              <TouchableOpacity style={styles.weirdButton}>
+              <TouchableOpacity style={styles.weirdButton} onPress={() => setSelectedType('Arbeit')}>
                 <Text style={styles.weirdText}>Arbeit</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.weirdButton}>
+              <TouchableOpacity style={styles.weirdButton} onPress={() => setSelectedType('Termin')}>
                 <Text style={styles.weirdText}>Termin</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.weirdButton}>
+              <TouchableOpacity style={styles.weirdButton} onPress={() => setSelectedType('Aufgabe')}>
                 <Text style={styles.weirdText}>Aufgabe</Text>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.weirdButton} onPress={createNew}>
+            <TouchableOpacity style={styles.createButton} onPress={createNew}>
               <Text style={styles.weirdText}>Erstellen</Text>
             </TouchableOpacity>
           </View>
@@ -238,88 +294,189 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
-    height: '100%',
+    backgroundColor: 'rgba(0,0,0,0.4)', // dark translucent background for modal overlay
   },
   modalView: {
-    width: '100%',
-    height: '100%',
-    margin: 20,
-    backgroundColor: 'white',
-    padding: 35,
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 25,
     alignItems: 'center',
-    elevation: 5,
+    elevation: 10,
+    shadowColor: '#000',            // iOS shadow
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   button: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
   buttonClose: {
     backgroundColor: '#2196F3',
   },
   textStyle: {
     color: 'white',
-    fontWeight: 'bold',
+    fontWeight: '600',
     textAlign: 'center',
+    fontSize: 16,
   },
   modalText: {
-    marginBottom: 15,
+    marginBottom: 20,
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
   },
   scrollView: {
     width: '100%',
     padding: 10,
   },
   eventItem: {
-    backgroundColor: '#f0f0f0',
-    marginBottom: 10,
-    padding: 10,
-    borderRadius: 10,
+    backgroundColor: '#f9f9f9',
+    marginBottom: 12,
+    padding: 15,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   eventTitle: {
-    fontWeight: 'bold',
+    fontWeight: '700',
+    fontSize: 16,
+    color: '#444',
+    marginBottom: 4,
   },
-  addButton: {
+addButton: {
     alignSelf: 'flex-end',
     margin: 15,
-    backgroundColor: 'lightblue',
+    backgroundColor: '#007AFF',
+    shadowColor: '#007AFF',
     borderRadius: 30,
     padding: 10,
     paddingLeft: 15,
     paddingRight: 15,
   },
   input: {
-    height: 40,
+    height: 45,
     width: '100%',
-    margin: 12,
-    padding: 10,
+    marginVertical: 10,
+    paddingHorizontal: 15,
     borderWidth: 1,
-    borderRadius: 10,
+    borderColor: '#ddd',
+    borderRadius: 15,
+    fontSize: 16,
+    backgroundColor: '#fafafa',
+    color: '#333',
   },
   closeButton: {
-    backgroundColor: '#2196F3',
     alignSelf: 'flex-end',
-    marginBottom: 10,
-    padding: 5,
-    borderRadius: 10,
+    marginBottom: 15,
+        padding: 6,
+    paddingLeft: 8,
+    paddingRight: 8,
+    borderRadius: 15,
+    backgroundColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   buttonView: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     width: '100%',
-    marginVertical: 10,
+    marginVertical: 15,
   },
   weirdButton: {
-    borderRadius: 10,
-    padding: 10,
-    elevation: 2,
-    backgroundColor: 'grey',
+    flex: 1,
     marginHorizontal: 5,
+    borderRadius: 25,
+    paddingVertical: 12,
+    backgroundColor: '#6c757d', // nice muted grey
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  createButton: {
+    marginTop: 10,
+    borderRadius: 25,
+    paddingVertical: 14,
+    paddingHorizontal: 50,
+    backgroundColor: '#28a745', // bootstrap green
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   weirdText: {
     color: 'white',
     textAlign: 'center',
+    fontWeight: '600',
+    fontSize: 16,
   },
+  eventItemRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#f9f9f9',
+  marginBottom: 12,
+  padding: 15,
+  borderRadius: 12,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.1,
+  shadowRadius: 3,
+  elevation: 2,
+},
+
+eventButtons: {
+  flexDirection: 'row',
+  marginLeft: 10,
+},
+
+editButton: {
+  backgroundColor: '#007bff',
+  paddingVertical: 6,
+  paddingHorizontal: 12,
+  borderRadius: 12,
+  marginRight: 8,
+  elevation: 2,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.2,
+  shadowRadius: 2,
+},
+
+deleteButton: {
+  backgroundColor: '#dc3545',
+  paddingVertical: 6,
+  paddingHorizontal: 12,
+  borderRadius: 12,
+  elevation: 2,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.2,
+  shadowRadius: 2,
+},
+
+buttonText: {
+  color: 'white',
+  fontWeight: '600',
+  fontSize: 14,
+},
 });
