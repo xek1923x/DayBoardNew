@@ -287,7 +287,7 @@ const eventsForSelectedDate = useMemo(() => {
         {/* Event List */}
         <FlatList
 
-          data={eventsForSelectedDate}
+          dtata={eventsForSelectedDate}
           keyExtractor={(_, i) => String(i)}
           renderItem={({ item, index }) => (
             <View style={styles.eventRow}>
