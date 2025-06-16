@@ -51,18 +51,24 @@ export default function Aufgaben() {
     ));
   };
 
-  const deleteTask = (id) => {
-    Alert.alert(
-      "Aufgabe löschen",
-      "Möchten Sie diese Aufgabe wirklich löschen?",
-      [
-        { text: "Abbrechen", style: "cancel" },
-        { text: "Löschen", style: "destructive", onPress: () => {
+const deleteTask = (id) => {
+  Alert.alert(
+    "Aufgabe löschen",
+    "Möchten Sie diese Aufgabe wirklich löschen?",
+    [
+      { text: "Abbrechen", style: "cancel" },
+      { 
+        text: "Löschen", 
+        style: "destructive", 
+        onPress: () => {
+          // Filter tasks by id instead of index
           setTasks(tasks.filter(task => task.id !== id));
-        }}
-      ]
-    );
-  };
+        }
+      }
+    ]
+  );
+};
+
 
   const completedTasks = tasks.filter(task => task.completed).length;
   const totalTasks = tasks.length;
@@ -113,8 +119,8 @@ export default function Aufgaben() {
                 <Task 
                   key={task.id}
                   task={task}
-                  onToggle={() => toggleTask(task.id)}
-                  onDelete={() => deleteTask(task.id)}
+                  onToggle={() => toggleTask(task.index)} // Toggle based on index
+                  onDelete={() => deleteTask(task.id)} // Delete based on id
                 />
               ))}
             </ScrollView>
