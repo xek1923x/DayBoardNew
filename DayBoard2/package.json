@@ -16,7 +16,10 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@react-native-community/datetimepicker": "^8.4.1",
     "@react-navigation/bottom-tabs": "^7.0.0",
+    "date-fns": "^4.1.0",
+    "datetimepicker": "^0.1.39",
     "expo": "^53.0.11",
     "expo-blur": "~14.1.4",
     "expo-constants": "^16.0.2",
@@ -36,6 +39,7 @@
     "react-native-calendars": "^1.1307.0",
     "react-native-collapsible": "^1.6.2",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-modal-datetime-picker": "^18.0.0",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.10.0",
