@@ -17,7 +17,10 @@
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
     "@react-native-community/datetimepicker": "^8.4.1",
+    "@react-native-cookies/cookies": "^6.2.1",
     "@react-navigation/bottom-tabs": "^7.0.0",
+    "axios": "^1.10.0",
+    "cheerio-without-node-native": "^0.20.2",
     "date-fns": "^4.1.0",
     "datetimepicker": "^0.1.39",
     "expo": "^53.0.11",

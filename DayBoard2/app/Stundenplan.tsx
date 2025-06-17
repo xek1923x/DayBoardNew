@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// Stundenplan.js
+import React, { useState, useEffect, useRef } from 'react';
 import {
   SafeAreaView,
   View,
@@ -9,23 +10,53 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Button,                  // ← added
 } from 'react-native';
+import { WebView } from 'react-native-webview';
+import axios from 'axios';
+
+import { login, fetchDashboard } from './crawler.tsx';  // ← unchanged
 
 export default function Stundenplan() {
   const [entries, setEntries] = useState([]);
   const [klassFilter, setKlassFilter] = useState('');
   const [teacherFilter, setTeacherFilter] = useState('');
   const [loading, setLoading] = useState(false);
+  const [legacy, setLegacy] = useState(false);
 
-  // Fetch all entries once
+  // ── NEW WEBVIEW STATES ─────────────────────────────────────
+  const [cookieHeader, setCookieHeader] = useState(null);
+  const [dashboardHtml, setDashboardHtml] = useState(null);
+  const webviewRef = useRef();
+
+  const YOUR_USER = '166162';
+  const YOUR_PASS = '20Bueffel21';
+
+  // 1) watch legacy → trigger the old crawler if legacy=true
+  useEffect(() => {
+    if (legacy) {
+      fetchEntries();
+    }
+  }, [legacy]);
+
+  // 2) when we get raw HTML via WebView/axios, parse into entries
+  useEffect(() => {
+    if (!legacy && dashboardHtml) {
+      setLoading(true);
+      const parsed = parseEntriesFromHtml(dashboardHtml);
+      setEntries(parsed);
+      setLoading(false);
+    }
+  }, [dashboardHtml, legacy]);
+
+  // ── LEGACY CODE (unchanged) ─────────────────────────────────
   const fetchEntries = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
-        'https://dsb-app-363581125799.europe-west3.run.app/entries'
-      );
-      const data = await res.json();
-      setEntries(data);
+      await login('YOUR_USERNAME', 'YOUR_PASSWORD');
+      const page = await fetchDashboard();
+      const parsed = parseEntriesFromHtml(page);
+      setEntries(parsed);
     } catch (err) {
       console.error(err);
     } finally {
@@ -33,27 +64,86 @@ export default function Stundenplan() {
     }
   };
 
-  useEffect(() => {
-    fetchEntries();
-  }, []);
+  // ── WEBVIEW FALLBACK (new) ──────────────────────────────────
 
-  
+  const onNavStateChange = navState => {
+    if (navState.url.includes('Default.aspx')) {
+      webviewRef.current.injectJavaScript(`
+        window.ReactNativeWebView.postMessage(document.cookie);
+        true;
+      `);
+    }
+  };
+
+  const onMessage = async event => {
+    const cookieStr = event.nativeEvent.data; // "ASP.NET_SessionId=…; DSBmobile=…"
+    setCookieHeader(cookieStr);
+
+    // fetch the dashboard HTML ourselves
+    try {
+      const { data } = await axios.get(
+        'https://www.dsbmobile.de/Default.aspx?menu=0&item=0',
+        { headers: { Cookie: cookieStr } }
+      );
+      setDashboardHtml(data);
+    } catch (err) {
+      console.error('Fetch dashboard failed', err);
+      setDashboardHtml('');
+    }
+  };
+
+  const startLogin = () => {
+    webviewRef.current.injectJavaScript(`
+      (function() {
+        document.getElementsByName('txtUser')[0].value = '${YOUR_USER}';
+        document.getElementsByName('txtPass')[0].value = '${YOUR_PASS}';
+        document.getElementsByName('ctl03')[0].click();
+      })();
+      true;
+    `);
+  };
+
+  // ── RENDERING ────────────────────────────────────────────────
+
+  // If legacy mode is OFF, we intercept and do the WebView login:
+  if (!legacy && !cookieHeader) {
+    return (
+      <View style={{ flex: 1 }}>
+        <WebView
+          ref={webviewRef}
+          source={{ uri: 'https://www.dsbmobile.de/Login.aspx' }}
+          onNavigationStateChange={onNavStateChange}
+          onMessage={onMessage}
+          startInLoadingState
+        />
+        <Button title="Log In" onPress={startLogin} />
+        <Text style={{ padding: 10, color: 'gray' }}>
+          Tap “Log In” to auto–fill & submit the form.
+        </Text>
+      </View>
+    );
+  }
+
+  // Otherwise we fall back to your existing table UI:
   const filteredEntries = entries.filter(item => {
-    const matchesClass = klassFilter === '' || item.class.toLowerCase().includes(klassFilter.toLowerCase());
-    const matchesTeacher = teacherFilter === '' || item.old_teacher.toLowerCase().includes(teacherFilter.toLowerCase());
+    const matchesClass =
+      klassFilter === '' ||
+      item.class.toLowerCase().includes(klassFilter.toLowerCase());
+    const matchesTeacher =
+      teacherFilter === '' ||
+      item.old_teacher.toLowerCase().includes(teacherFilter.toLowerCase());
     return matchesClass && matchesTeacher;
   });
 
-  
   const typeColors = {
     Vertretung: '#FFE4E1',
     'Eigenverantwortliches Arbeiten': '#FFFACD',
     'Raum-Vtr.': '#E0FFFF',
-    'Betreuung' : '#F0FFF0',
+    Betreuung: '#F0FFF0',
     'Unterricht geändert': '#EDE7F6',
     'Veranst.': '#FFF5EE',
-    'TrotzAbsenz': '#F0F8FF',
-    'Klausur': '#FFDAB9',
+    TrotzAbsenz: '#F0F8FF',
+    Klausur: '#FFDAB9',
     default: '#FFFFFF',
   };
 
@@ -85,7 +175,7 @@ export default function Stundenplan() {
   const renderItem = ({ item }) => {
     const bgColor = typeColors[item.type] || typeColors.default;
     return (
-      <View style={[styles.row, { backgroundColor: bgColor }]}>        
+      <View style={[styles.row, { backgroundColor: bgColor }]}>
         <Text style={styles.cell}>{item.date}</Text>
         <Text style={styles.cell}>{item.type}</Text>
         <Text style={styles.cell}>{item.class}</Text>
@@ -98,7 +188,7 @@ export default function Stundenplan() {
 
   const renderTableHeader = () => (
     <View style={styles.tableHeader}>
-      {['Datum','Art','Klasse','Stunde','Fach','Lehrer'].map(title => (
+      {['Datum', 'Art', 'Klasse', 'Stunde', 'Fach', 'Lehrer'].map(title => (
         <Text key={title} style={styles.headerCell}>
           {title}
         </Text>
@@ -129,6 +219,13 @@ export default function Stundenplan() {
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+
+// ── PLACEHOLDER PARSER ────────────────────────────────────
+// Replace this with your real HTML→entries parser from before
+function parseEntriesFromHtml(html) {
+  // e.g. use regex or DOM to pull out rows into { date, type, class, ... }
+  return [];
 }
 
 const styles = StyleSheet.create({
