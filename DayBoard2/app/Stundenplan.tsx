@@ -15,7 +15,7 @@ import {
 import { WebView } from 'react-native-webview';
 import axios from 'axios';
 
-import { login, fetchDashboard } from './crawler.tsx';  // ← unchanged
+import { login, fetchDashboard, getData } from './crawler.tsx';  // ← unchanged
 
 export default function Stundenplan() {
   const [entries, setEntries] = useState([]);
@@ -80,16 +80,25 @@ export default function Stundenplan() {
     setCookieHeader(cookieStr);
 
     // fetch the dashboard HTML ourselves
-    try {
-      const { data } = await axios.get(
-        'https://www.dsbmobile.de/Default.aspx?menu=0&item=0',
-        { headers: { Cookie: cookieStr } }
-      );
-      setDashboardHtml(data);
-    } catch (err) {
-      console.error('Fetch dashboard failed', err);
-      setDashboardHtml('');
-    }
+   try {
+     // call the JSON endpoint instead of scraping HTML
+     const json = await getData({ menu: 0, item: 0 });
+     console.log('Fetched dashboard JSON:', json);
+     
+     // map it into your table format:
+     const parsed = json.map((row) => ({
+       date:        row.Date,        // adjust these keys as needed
+       type:        row.Type,
+       class:       row.Class,
+       lesson:      row.Lesson,
+       subject:     row.Subject,
+       old_teacher: row.Teacher,
+     }));
+     setEntries(parsed);
+   } catch (err) {
+     console.error('Fetch dashboard failed', err);
+     setEntries([]);
+   }
   };
 
   const startLogin = () => {
@@ -109,13 +118,51 @@ export default function Stundenplan() {
   if (!legacy && !cookieHeader) {
     return (
       <View style={{ flex: 1 }}>
-        <WebView
-          ref={webviewRef}
-          source={{ uri: 'https://www.dsbmobile.de/Login.aspx' }}
-          onNavigationStateChange={onNavStateChange}
-          onMessage={onMessage}
-          startInLoadingState
-        />
+
+    <WebView
+      ref={ref => (webviewRef.current = ref)}
+      source={{ uri: 'https://www.dsbmobile.de/Default.aspx?menu=0&item=0' }}
+      onNavigationStateChange={navState => {
+        if (navState.url.includes('Default.aspx')) {
+          // once we're on the dashboard page, inject our scraper
+          webviewRef.current.injectJavaScript(`
+            (function() {
+              // collect all timetable entries
+              const elements = Array.from(document.querySelectorAll('.timetable-element'));
+              const data = elements.map(el => ({
+                uuid:   el.getAttribute('data-uuid'),
+                index:  el.getAttribute('data-index'),
+                meta:   el.querySelector('.meta')?.innerText.trim()   || '',
+                title:  el.querySelector('.title')?.innerText.trim()  || '',
+                page:   el.querySelector('.page')?.innerText.trim()   || '',
+              }));
+              window.ReactNativeWebView.postMessage(JSON.stringify(data));
+            })();
+            true;
+          `);
+        }
+      }}
+      onMessage={e => {
+        try {
+          const scraped = JSON.parse(e.nativeEvent.data);
+          // now map into your entries shape
+          const parsed = scraped.map(item => ({
+            date:        item.meta.split(' ')[0],    // "18.06.2025"
+            type:        item.title,                // e.g. "V-Homepage morgen"
+            class:       '',                        // not provided in timetable-element
+            lesson:      item.index,                // "1"
+            subject:     '',                        // not in this template
+            old_teacher: '',                        // not in this template
+            page:        item.page,                 // "6"
+            uuid:        item.uuid,                 // for debugging
+          }));
+          setEntries(parsed);
+        } catch (err) {
+          console.error('Failed to parse timetable data', err);
+        }
+      }}
+    />
+
         <Button title="Log In" onPress={startLogin} />
         <Text style={{ padding: 10, color: 'gray' }}>
           Tap “Log In” to auto–fill & submit the form.
