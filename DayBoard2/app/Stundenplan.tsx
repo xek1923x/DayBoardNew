@@ -1,5 +1,4 @@
-// src/screens/Stundenplan.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   View,
@@ -7,27 +6,19 @@ import {
   StyleSheet,
   TextInput,
   ActivityIndicator,
-  ScrollView,
-  Button,
-  Platform,
+  FlatList,
   KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import { WebView } from "react-native-webview";
-import axios from "axios";
-import { Table, TableWrapper, Row, Cell } from "react-native-table-component";
 
 export default function Stundenplan() {
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState([]);
   const [klassFilter, setKlassFilter] = useState("");
   const [teacherFilter, setTeacherFilter] = useState("");
   const [loading, setLoading] = useState(false);
-  const [legacy, setLegacy] = useState(true);
 
-  const YOUR_USER = "166162";
-  const YOUR_PASS = "20Bueffel21";
-
-  // --- Legacy: fetch remote API entries ---
-  const fetchEntriesRemote = async () => {
+  // Fetch all entries once
+  const fetchEntries = async () => {
     setLoading(true);
     try {
       const res = await fetch(
@@ -36,124 +27,86 @@ export default function Stundenplan() {
       const data = await res.json();
       setEntries(data);
     } catch (err) {
-      console.error("Remote fetch error", err);
-      setEntries([]);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (legacy) {
-      fetchEntriesRemote();
-    }
-  }, [legacy]);
+    fetchEntries();
+  }, []);
 
-  // --- Non-legacy: WebView crawling ---
-  const [cookieHeader, setCookieHeader] = useState<string | null>(null);
-  const webviewRef = useRef<WebView>(null);
-
-  // After login & navigation, WebView will post scraped JSON
-  const onMessage = (event) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      setEntries(data);
-      setLoading(false);
-    } catch (e) {
-      console.error("Parsing WebView data failed", e);
-    }
-  };
-
-  // Inject login script
-  const startLogin = () => {
-    const js = `(function() {
-      document.getElementsByName('txtUser')[0].value='${YOUR_USER}';
-      document.getElementsByName('txtPass')[0].value='${YOUR_PASS}';
-      document.getElementsByName('ctl03')[0].click();
-    })(); true;`;
-    webviewRef.current?.injectJavaScript(js);
-  };
-
-  // When on dashboard page, scrape entries
-  const onNavStateChange = (navState) => {
-    if (navState.url.includes("Default.aspx?menu=0")) {
-      const scrape = `
-        (function() {
-          const els = Array.from(document.querySelectorAll('.timetable-element'));
-          const data = els.map(el => ({
-            date: el.querySelector('.meta')?.innerText.split(' ')[0] || '',
-            type: el.querySelector('.title')?.innerText || '',
-            class: el.getAttribute('data-class') || '',
-            lesson: el.getAttribute('data-index') || '',
-            subject: el.getAttribute('data-subject') || '',
-            old_teacher: el.getAttribute('data-teacher') || '',
-          }));
-          window.ReactNativeWebView.postMessage(JSON.stringify(data));
-        })(); true;
-      `;
-      webviewRef.current?.injectJavaScript(scrape);
-    }
-  };
-
-  // --- Filtering ---
-  const filtered = entries.filter((item) => {
-    const byClass =
-      !klassFilter ||
+  const filteredEntries = entries.filter((item) => {
+    const matchesClass =
+      klassFilter === "" ||
       item.class.toLowerCase().includes(klassFilter.toLowerCase());
-    const byTeacher =
-      !teacherFilter ||
+    const matchesTeacher =
+      teacherFilter === "" ||
       item.old_teacher.toLowerCase().includes(teacherFilter.toLowerCase());
-    return byClass && byTeacher;
+    return matchesClass && matchesTeacher;
   });
 
-  // Table head and styles
-  const tableHead = ["Datum", "Art", "Klasse", "Stunde", "Fach", "Lehrer"];
+  const typeColors = {
+    Vertretung: "#FFE4E1",
+    "Eigenverantwortliches Arbeiten": "#FFFACD",
+    "Raum-Vtr.": "#E0FFFF",
+    Betreuung: "#F0FFF0",
+    "Unterricht geändert": "#EDE7F6",
+    "Veranst.": "#FFF5EE",
+    TrotzAbsenz: "#F0F8FF",
+    Klausur: "#FFDAB9",
+    default: "#FFFFFF",
+  };
 
-  // --- Render Legacy Remote Table ---
-  if (legacy) {
-    return (
-      <ScrollView style={styles.container}>
-        <View style={styles.controlsRemote}>
-          <Button title="Reload Entries" onPress={fetchEntriesRemote} />
-          <Button title="Switch to Crawler" onPress={() => setLegacy(false)} />
-        </View>
-        {loading ? (
-          <ActivityIndicator size="large" />
-        ) : (
-          <Table borderStyle={{ borderWidth: 1, borderColor: "#c8e1ff" }}>
-            <Row data={tableHead} style={styles.head} textStyle={styles.text} />
-            {filtered.map((row, idx) => (
-              <TableWrapper key={idx} style={styles.row}>
-                <Cell data={row.date} textStyle={styles.text} />
-                <Cell data={row.type} textStyle={styles.text} />
-                <Cell data={row.class} textStyle={styles.text} />
-                <Cell data={row.lesson} textStyle={styles.text} />
-                <Cell data={row.subject} textStyle={styles.text} />
-                <Cell data={row.old_teacher} textStyle={styles.text} />
-              </TableWrapper>
-            ))}
-          </Table>
-        )}
-      </ScrollView>
-    );
-  }
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+      <Text style={styles.headerText}>Vertretungsplan</Text>
+    </View>
+  );
 
-  // --- Render Crawler-based Table ---
-  if (!cookieHeader) {
+  const renderControls = () => (
+    <View style={styles.controls}>
+      <TextInput
+        style={styles.input}
+        value={klassFilter}
+        onChangeText={setKlassFilter}
+        placeholder="Klasse (z.B. 7a)"
+        placeholderTextColor="#666"
+      />
+      <TextInput
+        style={styles.input}
+        value={teacherFilter}
+        onChangeText={setTeacherFilter}
+        placeholder="Lehrerkürzel"
+        placeholderTextColor="#666"
+      />
+    </View>
+  );
+
+  const renderItem = ({ item }) => {
+    const bgColor = typeColors[item.type] || typeColors.default;
     return (
-      <View style={styles.container}>
-        <WebView
-          ref={webviewRef}
-          source={{
-            uri: "https://www.dsbmobile.de/Default.aspx?menu=0&item=0",
-          }}
-          onNavigationStateChange={onNavStateChange}
-          onMessage={onMessage}
-        />
-        <Button title="Log In" onPress={startLogin} />
+      <View style={[styles.row, { backgroundColor: bgColor }]}>
+        <Text style={styles.cell}>{item.date}</Text>
+        <Text style={styles.cell}>{item.type}</Text>
+        <Text style={styles.cell}>{item.class}</Text>
+        <Text style={styles.cell}>{item.lesson}</Text>
+        <Text style={styles.cell}>{item.subject}</Text>
+        <Text style={styles.cell}>{item.old_teacher}</Text>
       </View>
     );
-  }
+  };
+
+  const renderTableHeader = () => (
+    <View style={styles.tableHeader}>
+      {["Datum", "Art", "Klasse", "Stunde", "Fach", "Lehrer"].map((title) => (
+        <Text key={title} style={styles.headerCell}>
+          {title}
+        </Text>
+      ))}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -161,72 +114,93 @@ export default function Stundenplan() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <View style={styles.controlsCrawler}>
-          <TextInput
-            style={styles.input}
-            placeholder="Klasse (z.B. 7a)"
-            value={klassFilter}
-            onChangeText={setKlassFilter}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Lehrerkürzel"
-            value={teacherFilter}
-            onChangeText={setTeacherFilter}
-          />
-          <Button title="Switch to Remote" onPress={() => setLegacy(true)} />
-        </View>
+        {renderHeader()}
+        {renderControls()}
         {loading ? (
           <ActivityIndicator size="large" style={styles.loader} />
         ) : (
-          <ScrollView>
-            <Table borderStyle={{ borderWidth: 1, borderColor: "#c8e1ff" }}>
-              <Row
-                data={tableHead}
-                style={styles.head}
-                textStyle={styles.text}
-              />
-              {filtered.map((row, idx) => (
-                <TableWrapper key={idx} style={styles.row}>
-                  <Cell data={row.date} textStyle={styles.text} />
-                  <Cell data={row.type} textStyle={styles.text} />
-                  <Cell data={row.class} textStyle={styles.text} />
-                  <Cell data={row.lesson} textStyle={styles.text} />
-                  <Cell data={row.subject} textStyle={styles.text} />
-                  <Cell data={row.old_teacher} textStyle={styles.text} />
-                </TableWrapper>
-              ))}
-            </Table>
-          </ScrollView>
+          <FlatList
+            data={filteredEntries}
+            keyExtractor={(item, idx) => `${item.lesson}-${idx}`}
+            ListHeaderComponent={renderTableHeader}
+            stickyHeaderIndices={[0]}
+            renderItem={renderItem}
+            contentContainerStyle={styles.tableContainer}
+          />
         )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-// Stub parser for HTML scraping
-function parseEntriesFromHtml(html: string) {
-  // implement real parsing if needed
-  return [];
-}
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F0F4F8", padding: 16 },
-  head: { height: 40, backgroundColor: "#808B97" },
-  text: { margin: 6, textAlign: "center" },
-  row: { flexDirection: "row", backgroundColor: "#FFF1C1" },
-  controlsRemote: {
+  container: {
+    flex: 1,
+    backgroundColor: "#F0F4F8",
+  },
+  headerContainer: {
+    padding: 16,
+    backgroundColor: "#4F6D7A",
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  headerText: {
+    fontSize: 24,
+    color: "#FFF",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  controls: {
     flexDirection: "row",
+    margin: 16,
     justifyContent: "space-between",
-    marginBottom: 12,
   },
-  controlsCrawler: { marginBottom: 12 },
   input: {
-    height: 40,
-    borderWidth: 1,
-    padding: 10,
+    flex: 1,
+    height: 44,
     backgroundColor: "#FFF",
-    marginBottom: 8,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginRight: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  loader: { marginTop: 20 },
+  loader: {
+    marginTop: 20,
+  },
+  tableContainer: {
+    paddingBottom: 16,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    backgroundColor: "#B0C4DE",
+    paddingVertical: 8,
+  },
+  headerCell: {
+    flex: 1,
+    fontWeight: "600",
+    textAlign: "center",
+    color: "#333",
+  },
+  row: {
+    flexDirection: "row",
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    marginVertical: 4,
+    marginHorizontal: 8,
+  },
+  cell: {
+    flex: 1,
+    textAlign: "center",
+    color: "#444",
+  },
 });
