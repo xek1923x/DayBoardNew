@@ -125,35 +125,22 @@ export async function fetchDashboard(): Promise<string> {
 /**
  * Fetches the JSON timetable data directly.
  */
-export async function getData(params: { menu: number; item: number }): Promise<any[]> {
-  try {
-    console.log('➡️ getData: invoking fetchDashboard()');
-    const shell = await fetchDashboard();
+export async function getData(): Promise<string> {
+  // 1) Get the dashboard shell HTML
+  const shell = await fetchDashboard();
 
-    console.log('📄 shell HTML snippet =', shell.slice(0, 300));
-    const match = shell.match(/(\/jhw-[0-9a-fA-F-]+\.ashx(?:\/GetData)?)/);
-    console.log('🔍 getData: endpoint regex match =', match);
-    if (!match) {
-      throw new Error('GetData endpoint not found in shell HTML');
-    }
-    const endpoint = match[1].startsWith('http')
-      ? match[1]
-      : `${BASE_URL}${match[1]}`;
-    console.log('➡️ getData: POST to endpoint =', endpoint, 'payload =', params);
-
-    const res = await api.post(endpoint, params, {
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        Referer: `${BASE_URL}/Default.aspx?menu=${params.menu}&item=${params.item}`,
-        Cookie: cookieHeader,
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-    });
-    console.log('⬅️ getData: status =', res.status);
-    console.log('📥 getData: data =', res.data);
-    return res.data;
-  } catch (err) {
-    console.error('💥 getData error:', err);
-    throw err;
+  // 2) Extract the data URL path (/data/{sessionGuid}/{planGuid}/subst_001.htm)
+  const match = shell.match(/\/data\/[0-9a-f-]+\/[0-9a-f-]+\/subst_001\\.htm/);
+  if (!match) {
+    throw new Error("Data URL not found in dashboard HTML");
   }
+  const dataPath = match[0];
+
+  // 3) GET the substitution HTML
+  const res = await api.get<string>(dataPath, {
+    headers: { Referer: `${BASE_URL}/Default.aspx?menu=0&item=0` },
+  });
+
+  // 4) Return raw HTML for parsing
+  return res.data;
 }

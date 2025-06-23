@@ -156,6 +156,10 @@ export default function ProfileSettingsScreen() {
         <Text style={settings.darkMode && styles.darkText}>Experimental Settings</Text>
         <Switch value={settings.experimental} onValueChange={toggleSetting('experimental')} />
       </View>
+      <View style={styles.row}>
+        <Text style={settings.darkMode && styles.darkText}>Experimental Settings</Text>
+        <Switch value={settings.experimental} onValueChange={toggleSetting('experimental')} />
+      </View>
     </ScrollView>
   );
 }

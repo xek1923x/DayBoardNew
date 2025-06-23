@@ -1,3 +1,4 @@
+// src/screens/Stundenplan.tsx
 import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
@@ -9,16 +10,26 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Button,
 } from "react-native";
+import {
+  setCrawlerCookie,
+  login,
+  getData as fetchPlanHtml,
+} from "./crawler"; // adjust relative path
 
 export default function Stundenplan() {
-  const [entries, setEntries] = useState([]);
+  const [entries, setEntries] = useState<any[]>([]);
   const [klassFilter, setKlassFilter] = useState("");
   const [teacherFilter, setTeacherFilter] = useState("");
   const [loading, setLoading] = useState(false);
+  const [legacy, setLegacy] = useState(true);
 
-  // Fetch all entries once
-  const fetchEntries = async () => {
+  const YOUR_USER = "166162";
+  const YOUR_PASS = "20Bueffel21";
+
+  // --- Legacy: fetch remote API entries ---
+  const fetchEntriesRemote = async () => {
     setLoading(true);
     try {
       const res = await fetch(
@@ -28,26 +39,45 @@ export default function Stundenplan() {
       setEntries(data);
     } catch (err) {
       console.error(err);
+      setEntries([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchEntries();
-  }, []);
+  // --- Non-legacy: crawler fetching + HTML parsing ---
+  const fetchEntriesCrawler = async () => {
+    setLoading(true);
+    try {
+      // initialize cookie (if persisted) or empty
+      setCrawlerCookie("");
+      await login(YOUR_USER, YOUR_PASS);
+      const html = await fetchPlanHtml();
+      const data = parseEntriesFromHtml(html);
+      setEntries(data);
+    } catch (err) {
+      console.error("Crawler error", err);
+      setEntries([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filteredEntries = entries.filter((item) => {
+  // Kick off on mount and on toggle
+  useEffect(() => {
+    if (legacy) fetchEntriesRemote();
+    else fetchEntriesCrawler();
+  }, [legacy]);
+
+  const filteredEntries = entries.filter(item => {
     const matchesClass =
-      klassFilter === "" ||
-      item.class.toLowerCase().includes(klassFilter.toLowerCase());
+      !klassFilter || item.class.toLowerCase().includes(klassFilter.toLowerCase());
     const matchesTeacher =
-      teacherFilter === "" ||
-      item.old_teacher.toLowerCase().includes(teacherFilter.toLowerCase());
+      !teacherFilter || item.old_teacher.toLowerCase().includes(teacherFilter.toLowerCase());
     return matchesClass && matchesTeacher;
   });
 
-  const typeColors = {
+  const typeColors: Record<string, string> = {
     Vertretung: "#FFE4E1",
     "Eigenverantwortliches Arbeiten": "#FFFACD",
     "Raum-Vtr.": "#E0FFFF",
@@ -81,13 +111,25 @@ export default function Stundenplan() {
         placeholder="Lehrerkürzel"
         placeholderTextColor="#666"
       />
+      {/*<Button
+        title={legacy ? "Crawler-Modus" : "Legacy-Modus"}
+        onPress={() => setLegacy(prev => !prev)}
+      />*/}
+    </View>
+  );
+
+  const renderTableHeader = () => (
+    <View style={styles.tableHeader}>
+      {["Datum", "Art", "Klasse", "Stunde", "Fach", "Lehrer"].map(title => (
+        <Text key={title} style={styles.headerCell}>{title}</Text>
+      ))}
     </View>
   );
 
   const renderItem = ({ item }) => {
     const bgColor = typeColors[item.type] || typeColors.default;
     return (
-      <View style={[styles.row, { backgroundColor: bgColor }]}>
+      <View style={[styles.row, { backgroundColor: bgColor }]}>  
         <Text style={styles.cell}>{item.date}</Text>
         <Text style={styles.cell}>{item.type}</Text>
         <Text style={styles.cell}>{item.class}</Text>
@@ -97,16 +139,6 @@ export default function Stundenplan() {
       </View>
     );
   };
-
-  const renderTableHeader = () => (
-    <View style={styles.tableHeader}>
-      {["Datum", "Art", "Klasse", "Stunde", "Fach", "Lehrer"].map((title) => (
-        <Text key={title} style={styles.headerCell}>
-          {title}
-        </Text>
-      ))}
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -133,11 +165,14 @@ export default function Stundenplan() {
   );
 }
 
+// Simple HTML parser stub
+function parseEntriesFromHtml(html: string): any[] {
+  // TODO: implement real parsing with cheerio or regex
+  return [];
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F0F4F8",
-  },
+  container: { flex: 1, backgroundColor: "#F0F4F8" },
   headerContainer: {
     padding: 16,
     backgroundColor: "#4F6D7A",
@@ -149,17 +184,8 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 4,
   },
-  headerText: {
-    fontSize: 24,
-    color: "#FFF",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  controls: {
-    flexDirection: "row",
-    margin: 16,
-    justifyContent: "space-between",
-  },
+  headerText: { fontSize: 24, color: "#FFF", fontWeight: "bold", textAlign: "center" },
+  controls: { flexDirection: "row", alignItems: "center", margin: 16, justifyContent: "space-between" },
   input: {
     flex: 1,
     height: 44,
@@ -173,34 +199,10 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  loader: {
-    marginTop: 20,
-  },
-  tableContainer: {
-    paddingBottom: 16,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    backgroundColor: "#B0C4DE",
-    paddingVertical: 8,
-  },
-  headerCell: {
-    flex: 1,
-    fontWeight: "600",
-    textAlign: "center",
-    color: "#333",
-  },
-  row: {
-    flexDirection: "row",
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 4,
-    marginVertical: 4,
-    marginHorizontal: 8,
-  },
-  cell: {
-    flex: 1,
-    textAlign: "center",
-    color: "#444",
-  },
+  loader: { marginTop: 20 },
+  tableContainer: { paddingBottom: 16 },
+  tableHeader: { flexDirection: "row", backgroundColor: "#B0C4DE", paddingVertical: 8 },
+  headerCell: { flex: 1, fontWeight: "600", textAlign: "center", color: "#333" },
+  row: { flexDirection: "row", paddingVertical: 12, paddingHorizontal: 8, borderRadius: 4, marginVertical: 4, marginHorizontal: 8 },
+  cell: { flex: 1, textAlign: "center", color: "#444" },
 });
