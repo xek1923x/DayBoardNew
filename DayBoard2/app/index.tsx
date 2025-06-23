@@ -33,7 +33,7 @@ export default function MyCalendar() {
   const [modalEditVisible, setModalEditVisible] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
-  const [selectedRepeat, setSelectedRepeat] = useState('None');
+  const [selectedRepeat, setSelectedRepeat] = useState('Nie');
   const [currentMonth, setCurrentMonth] = useState({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1
@@ -133,7 +133,7 @@ export default function MyCalendar() {
     setStartTime(null);
     setEndTime(null);
     setSelectedType(null);
-    setSelectedRepeat('None');
+    setSelectedRepeat('Nie');
     setEditingIndex(null);
   }
 
@@ -157,6 +157,10 @@ export default function MyCalendar() {
     setEventsByDate({ ...eventsByDate, [selectedDate]: updatedList });
   }
 
+  function loadItemsForDate(date) {
+
+  }
+
   // Recompute markedDates per month & repeats
 const markedDates = useMemo(() => {
   const marks = {};
@@ -178,17 +182,17 @@ const markedDates = useMemo(() => {
         let mark = false;
 
         // always mark original on its date
-        if (dayStr === date && ev.repeat === 'None') {
+        if (dayStr === date && ev.repeat === 'Nie') {
           mark = true;
         }
         // after original date
-        if (ev.repeat === 'Daily' && dt >= orig) {
+        if (ev.repeat === 'Täglich' && dt >= orig) {
           mark = true;
         }
-        if (ev.repeat === 'Weekly' && dt >= orig && dt.getDay() === orig.getDay()) {
+        if (ev.repeat === 'Wöchentlich' && dt >= orig && dt.getDay() === orig.getDay()) {
           mark = true;
         }
-        if (ev.repeat === 'Monthly' && dt >= orig && dt.getDate() === orig.getDate()) {
+        if (ev.repeat === 'Jeden Monat' && dt >= orig && dt.getDate() === orig.getDate()) {
           mark = true;
         }
 
@@ -228,15 +232,15 @@ const eventsForSelectedDate = useMemo(() => {
       }
 
       // then check repeats
-      if (ev.repeat === 'Daily') {
+      if (ev.repeat === 'Täglich') {
         results.push(ev);
       } else if (
-        ev.repeat === 'Weekly' &&
+        ev.repeat === 'Wöchentlich' &&
         sel.getDay() === orig.getDay()
       ) {
         results.push(ev);
       } else if (
-        ev.repeat === 'Monthly' &&
+        ev.repeat === 'Jeden Monat' &&
         sel.getDate() === orig.getDate()
       ) {
         results.push(ev);
@@ -287,7 +291,7 @@ const eventsForSelectedDate = useMemo(() => {
         {/* Event List */}
         <FlatList
 
-          dtata={eventsForSelectedDate}
+          data={eventsForSelectedDate}
           keyExtractor={(_, i) => String(i)}
           renderItem={({ item, index }) => (
             <View style={styles.eventRow}>
@@ -297,7 +301,7 @@ const eventsForSelectedDate = useMemo(() => {
                 {item.end && <Text>Ende: {item.end}</Text>}
                 {item.details ? <Text>{item.details}</Text> : null}
                 <Text style={styles.repeatText}>
-                  Wiederholt: {item.repeat === 'None' ? 'Nie' : item.repeat}
+                  Wiederholt: {item.repeat === 'Nie' ? 'Nie' : item.repeat}
                 </Text>
               </View>
               <View style={styles.buttonsRow}>
@@ -352,7 +356,7 @@ const eventsForSelectedDate = useMemo(() => {
                   <Text>
                     {item.start ? `${item.start} – ` : ''}
                     {item.title}{' '}
-                    ({item.repeat === 'None' ? 'Nie' : item.repeat})
+                    ({item.repeat === 'Nie' ? 'Nie' : item.repeat})
                   </Text>
                   {item.details ? (
                     <Text>{item.details}</Text>
@@ -442,7 +446,7 @@ const eventsForSelectedDate = useMemo(() => {
 
             {/* Repeat Selector */}
             <View style={styles.choiceRow}>
-              {['None', 'Daily', 'Weekly', 'Monthly'].map(r => (
+              {['Nie', 'Täglich', 'Wöchentlich', 'Jeden Monat'].map(r => (
                 <TouchableOpacity
                   key={r}
                   style={[
@@ -452,7 +456,7 @@ const eventsForSelectedDate = useMemo(() => {
                   onPress={() => setSelectedRepeat(r)}
                 >
                   <Text style={styles.choiceText}>
-                    {r === 'None' ? 'Nie' : r}
+                    {r === 'Nie' ? 'Nie' : r}
                   </Text>
                 </TouchableOpacity>
               ))}
