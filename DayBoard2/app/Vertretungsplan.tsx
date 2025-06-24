@@ -10,14 +10,9 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Switch,
-  TouchableOpacity
+  TouchableOpacity,
 } from "react-native";
-import {
-  setCrawlerCookie,
-  login,
-  getData as fetchPlanHtml,
-} from "./crawler";
+import { setCrawlerCookie, login, getData as fetchPlanHtml } from "./crawler";
 import * as SecureStore from "expo-secure-store";
 
 export default function Stundenplan() {
@@ -33,10 +28,9 @@ export default function Stundenplan() {
   const YOUR_PASS = "20Bueffel21";
   const CLASS_FILTER_KEY = "class_filters";
   const SETTINGS_KEY = "app_settings";
+  const TODAY_TOMORROW_KEY = "today_tomorrow";
 
-  const [viewMode, setViewMode] = useState<"today" | "tomorrow">(
-    "today"
-  );
+  const [viewMode, setViewMode] = useState<"today" | "tomorrow">("today");
 
   // --- Legacy fetch ---
   const fetchEntriesRemote = async () => {
@@ -50,6 +44,15 @@ export default function Stundenplan() {
       setEntries([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewModeChange = async (mode: "today" | "tomorrow") => {
+    setViewMode(mode);
+    try {
+      await SecureStore.setItemAsync(TODAY_TOMORROW_KEY, JSON.stringify(mode));
+    } catch (e) {
+      console.warn("Failed to save view mode", e);
     }
   };
 
@@ -71,7 +74,6 @@ export default function Stundenplan() {
   const loadConfig = async () => {
     const savedClass = await SecureStore.getItemAsync(CLASS_FILTER_KEY);
     if (savedClass) {
-      // stored as JSON string, so parse then toString()
       setKlassFilter(JSON.parse(savedClass).toString());
     }
 
@@ -86,20 +88,22 @@ export default function Stundenplan() {
       setSimpleNames(simp);
       setGroupConnected(grp);
     }
+
+    const todayTomorrow = await SecureStore.getItemAsync(TODAY_TOMORROW_KEY);
+    if (todayTomorrow) {
+      setViewMode(JSON.parse(todayTomorrow));
+    }
+
   };
 
   // --- on mount & legacy toggle ---
   useEffect(() => {
     (async () => {
-      const savedClass = await SecureStore.getItemAsync(CLASS_FILTER_KEY);
-      if (savedClass) setKlassFilter(JSON.parse(savedClass).toString());
-
-      const settings = await SecureStore.getItemAsync(SETTINGS_KEY);
-      if (settings) {
-        const { experimental: exp, simpleNames: simp, groupClasses: grp } = JSON.parse(settings);
-        setLegacy(!exp);
-        setSimpleNames(simp);
-        setGroupConnected(grp);
+      await loadConfig();
+      if (legacy) {
+        await fetchEntriesRemote();
+      } else {
+        await fetchEntriesCrawler();
       }
     })();
 
@@ -116,19 +120,16 @@ export default function Stundenplan() {
   );
 
   function filterItem(item: any, klass: string, teacher: string) {
-
     const klassTerms = klass
       .split(",")
       .map((s) => s.trim())
       .filter((s) => /[A-Za-z0-9]/.test(s));
-
 
     const okClass =
       klassTerms.length === 0 ||
       klassTerms.some((term) =>
         item.class.toLowerCase().includes(term.toLowerCase())
       );
-
 
     const teacherTerms = teacher
       .split(",")
@@ -146,25 +147,45 @@ export default function Stundenplan() {
 
   const handleRefresh = async () => {
     await loadConfig();
-
     legacy ? fetchEntriesRemote() : fetchEntriesCrawler();
-    
   };
-  
-  
 
-  // --- sorted for FlatList when not grouping, and base for grouping ---
-  const sortedEntries = useMemo(() => {
-    return [...filteredEntries].sort((a, b) => {
+  // --- categorize by date ---
+  const { todayItems, tomorrowItems } = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const dayAfter = new Date(tomorrow);
+    dayAfter.setDate(tomorrow.getDate() + 1);
+
+    const all = filteredEntries;
+    const todayItems = all.filter((item) => {
+      const d = parseGermanDate(item.date);
+      return d >= today && d < tomorrow;
+    });
+    const tomorrowItems = all.filter((item) => {
+      const d = parseGermanDate(item.date);
+      return d >= tomorrow && d < dayAfter;
+    });
+
+    return { todayItems, tomorrowItems };
+  }, [filteredEntries]);
+
+  // 1) pick only today or tomorrow
+  const displayed = useMemo(
+    () => (viewMode === "today" ? todayItems : tomorrowItems),
+    [viewMode, todayItems, tomorrowItems]
+  );
+
+  // 2) sort & mark group boundaries here
+  const displayedWithGroups = useMemo(() => {
+    const arr = [...displayed].sort((a, b) => {
       if (a.class < b.class) return -1;
       if (a.class > b.class) return 1;
       return Number(a.lesson) - Number(b.lesson);
     });
-  }, [filteredEntries]);
-
-  // --- annotate for grouping ---
-  const connectedEntries = useMemo(() => {
-    return sortedEntries.map((item, i, arr) => {
+    return arr.map((item, i) => {
       const prev = arr[i - 1];
       const next = arr[i + 1];
       return {
@@ -173,67 +194,10 @@ export default function Stundenplan() {
         isLastOfGroup: !next || next.class !== item.class,
       };
     });
-  }, [sortedEntries]);
+  }, [displayed]);
 
-  // --- choose data to render ---
-  const dataToRender = groupConnected ? connectedEntries : sortedEntries;
-
-  // --- color map ---
-  const typeColors: Record<string, string> = {
-    Vertretung: "#FFE4E1",
-    "Eigenverantwortliches Arbeiten": "#FFFACD",
-    "Raum-Vtr.": "#E0FFFF",
-    Betreuung: "#F0FFF0",
-    "Unterricht geändert": "#EDE7F6",
-    "Veranst.": "#FFF5EE",
-    TrotzAbsenz: "#F0F8FF",
-    Klausur: "#FFDAB9",
-    "Statt-Vertretung": "#FFF3E0",
-    "Sondereins.": "#E0F7FA",
-    default: "#FFFFFF",
-  };
-
-  const { todayItems, tomorrowItems } = useMemo(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    const dayAfter = new Date(tomorrow);
-    dayAfter.setDate(tomorrow.getDate() + 1);
-  
-    const todayItems = dataToRender.filter(item => {
-      const d = parseGermanDate(item.date);
-      return d >= today && d < tomorrow;
-    });
-    const tomorrowItems = dataToRender.filter(item => {
-      const d = parseGermanDate(item.date);
-      return d >= tomorrow && d < dayAfter;
-    });
-  
-    return { todayItems, tomorrowItems };
-  }, [dataToRender]);
-
-  const sections = useMemo(() => {
-    if (viewMode === "today") {
-      return [{ title: "Heute", data: todayItems }];
-    }
-    if (viewMode === "tomorrow") {
-      return [{ title: "Morgen", data: tomorrowItems }];
-    }
-    // both
-    return [
-      { title: "Heute", data: todayItems },
-      { title: "Morgen", data: tomorrowItems },
-    ];
-  }, [viewMode, todayItems, tomorrowItems]);
-
-  const displayedEntries = useMemo(
-    () => (viewMode === "today" ? todayItems : tomorrowItems),
-    [viewMode, todayItems, tomorrowItems]
-  );
-
-  
-
+  // 3) choose the final data array
+  const dataToRender = groupConnected ? displayedWithGroups : displayed;
 
   // --- UI pieces ---
   const renderHeader = () => (
@@ -241,6 +205,7 @@ export default function Stundenplan() {
       <Text style={styles.headerText}>Vertretungsplan</Text>
     </View>
   );
+
   const renderControls = () => (
     <View style={styles.controls}>
       <TextInput
@@ -257,9 +222,9 @@ export default function Stundenplan() {
         placeholder="Lehrerkürzel"
         placeholderTextColor="#666"
       />
-      
     </View>
   );
+
   const renderTableHeader = () => (
     <View style={styles.tableHeader}>
       {["Datum", "Art", "Klasse", "Stunde", "Fach", "Lehrer"].map((t) => (
@@ -270,12 +235,9 @@ export default function Stundenplan() {
     </View>
   );
 
-  // --- item renderer ---
   const renderItem = ({ item }) => {
-
     const bgColor = typeColors[item.type] || typeColors.default;
     let newName = item.type;
-    // simplify type name
     if (simpleNames) {
       switch (item.type) {
         case "Eigenverantwortliches Arbeiten":
@@ -296,7 +258,6 @@ export default function Stundenplan() {
       }
     }
 
-    
     return (
       <View
         style={[
@@ -325,7 +286,6 @@ export default function Stundenplan() {
       >
         {renderHeader()}
         {renderControls()}
-
         <View style={styles.switchContainer}>
           {["today", "tomorrow"].map((mode) => (
             <TouchableOpacity
@@ -334,7 +294,7 @@ export default function Stundenplan() {
                 styles.switchButton,
                 viewMode === mode && styles.switchButtonActive,
               ]}
-              onPress={() => setViewMode(mode as any)}
+              onPress={() => handleViewModeChange(mode as "today" | "tomorrow")}
             >
               <Text
                 style={[
@@ -352,7 +312,7 @@ export default function Stundenplan() {
           <ActivityIndicator size="large" style={styles.loader} />
         ) : (
           <FlatList
-            data={displayedEntries}
+            data={dataToRender}
             keyExtractor={(item, idx) => `${item.class}-${item.lesson}-${idx}`}
             ListHeaderComponent={renderTableHeader}
             renderItem={renderItem}
@@ -375,6 +335,20 @@ function parseGermanDate(str: string): Date {
   const [day, month, year] = str.split(".").map(Number);
   return new Date(year, month - 1, day);
 }
+
+const typeColors: Record<string, string> = {
+  Vertretung: "#FFE4E1",
+  "Eigenverantwortliches Arbeiten": "#FFFACD",
+  "Raum-Vtr.": "#E0FFFF",
+  Betreuung: "#F0FFF0",
+  "Unterricht geändert": "#EDE7F6",
+  "Veranst.": "#FFF5EE",
+  TrotzAbsenz: "#F0F8FF",
+  Klausur: "#FFDAB9",
+  "Statt-Vertretung": "#FFF3E0",
+  "Sondereins.": "#E0F7FA",
+  default: "#FFFFFF",
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F0F4F8" },
@@ -476,4 +450,3 @@ const styles = StyleSheet.create({
     color: "#FFF",
   },
 });
-
