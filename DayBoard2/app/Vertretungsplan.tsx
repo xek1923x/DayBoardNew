@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Switch,
+  TouchableOpacity
 } from "react-native";
 import {
   setCrawlerCookie,
@@ -30,8 +31,12 @@ export default function Stundenplan() {
 
   const YOUR_USER = "166162";
   const YOUR_PASS = "20Bueffel21";
-  const CLASS_FILTER_KEY = "class_filter";
+  const CLASS_FILTER_KEY = "class_filters";
   const SETTINGS_KEY = "app_settings";
+
+  const [viewMode, setViewMode] = useState<"today" | "tomorrow">(
+    "today"
+  );
 
   // --- Legacy fetch ---
   const fetchEntriesRemote = async () => {
@@ -63,11 +68,31 @@ export default function Stundenplan() {
     }
   };
 
+  const loadConfig = async () => {
+    const savedClass = await SecureStore.getItemAsync(CLASS_FILTER_KEY);
+    if (savedClass) {
+      // stored as JSON string, so parse then toString()
+      setKlassFilter(JSON.parse(savedClass).toString());
+    }
+
+    const settingsData = await SecureStore.getItemAsync(SETTINGS_KEY);
+    if (settingsData) {
+      const {
+        experimental: exp,
+        simpleNames: simp,
+        groupClasses: grp,
+      } = JSON.parse(settingsData);
+      setLegacy(!exp);
+      setSimpleNames(simp);
+      setGroupConnected(grp);
+    }
+  };
+
   // --- on mount & legacy toggle ---
   useEffect(() => {
     (async () => {
       const savedClass = await SecureStore.getItemAsync(CLASS_FILTER_KEY);
-      if (savedClass) setKlassFilter(savedClass);
+      if (savedClass) setKlassFilter(JSON.parse(savedClass).toString());
 
       const settings = await SecureStore.getItemAsync(SETTINGS_KEY);
       if (settings) {
@@ -119,8 +144,11 @@ export default function Stundenplan() {
     return okClass && okTeacher;
   }
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
+    await loadConfig();
+
     legacy ? fetchEntriesRemote() : fetchEntriesCrawler();
+    
   };
   
   
@@ -164,6 +192,48 @@ export default function Stundenplan() {
     "Sondereins.": "#E0F7FA",
     default: "#FFFFFF",
   };
+
+  const { todayItems, tomorrowItems } = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const dayAfter = new Date(tomorrow);
+    dayAfter.setDate(tomorrow.getDate() + 1);
+  
+    const todayItems = dataToRender.filter(item => {
+      const d = parseGermanDate(item.date);
+      return d >= today && d < tomorrow;
+    });
+    const tomorrowItems = dataToRender.filter(item => {
+      const d = parseGermanDate(item.date);
+      return d >= tomorrow && d < dayAfter;
+    });
+  
+    return { todayItems, tomorrowItems };
+  }, [dataToRender]);
+
+  const sections = useMemo(() => {
+    if (viewMode === "today") {
+      return [{ title: "Heute", data: todayItems }];
+    }
+    if (viewMode === "tomorrow") {
+      return [{ title: "Morgen", data: tomorrowItems }];
+    }
+    // both
+    return [
+      { title: "Heute", data: todayItems },
+      { title: "Morgen", data: tomorrowItems },
+    ];
+  }, [viewMode, todayItems, tomorrowItems]);
+
+  const displayedEntries = useMemo(
+    () => (viewMode === "today" ? todayItems : tomorrowItems),
+    [viewMode, todayItems, tomorrowItems]
+  );
+
+  
+
 
   // --- UI pieces ---
   const renderHeader = () => (
@@ -255,11 +325,34 @@ export default function Stundenplan() {
       >
         {renderHeader()}
         {renderControls()}
+
+        <View style={styles.switchContainer}>
+          {["today", "tomorrow"].map((mode) => (
+            <TouchableOpacity
+              key={mode}
+              style={[
+                styles.switchButton,
+                viewMode === mode && styles.switchButtonActive,
+              ]}
+              onPress={() => setViewMode(mode as any)}
+            >
+              <Text
+                style={[
+                  styles.switchText,
+                  viewMode === mode && styles.switchTextActive,
+                ]}
+              >
+                {mode === "today" ? "Heute" : "Morgen"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {loading ? (
           <ActivityIndicator size="large" style={styles.loader} />
         ) : (
           <FlatList
-            data={dataToRender}
+            data={displayedEntries}
             keyExtractor={(item, idx) => `${item.class}-${item.lesson}-${idx}`}
             ListHeaderComponent={renderTableHeader}
             renderItem={renderItem}
@@ -276,6 +369,11 @@ export default function Stundenplan() {
 // stub parser
 function parseEntriesFromHtml(html: string): any[] {
   return [];
+}
+
+function parseGermanDate(str: string): Date {
+  const [day, month, year] = str.split(".").map(Number);
+  return new Date(year, month - 1, day);
 }
 
 const styles = StyleSheet.create({
@@ -308,12 +406,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderRadius: 8,
     paddingHorizontal: 12,
-    marginRight: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    margin: 4,
+    justifyContent: "center",
+    alignItems: "center",
   },
   loader: { marginTop: 20 },
   tableContainer: { paddingBottom: 16 },
@@ -341,18 +436,44 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
-    marginBottom: 0
+    marginBottom: 0,
   },
   lastRow: {
     marginBottom: 12,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
-    marginTop: 0
+    marginTop: 0,
   },
   middleRow: {
     marginBottom: 0,
-    marginTop: 0
+    marginTop: 0,
   },
   cell: { flex: 1, textAlign: "center", color: "#444" },
+  switchContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  switchButton: {
+    flex: 1,
+    paddingVertical: 8,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: "#4F6D7A",
+    borderRadius: 8,
+    backgroundColor: "#FFF",
+  },
+  switchButtonActive: {
+    backgroundColor: "#4F6D7A",
+  },
+  switchText: {
+    textAlign: "center",
+    color: "#4F6D7A",
+    fontWeight: "600",
+  },
+  switchTextActive: {
+    color: "#FFF",
+  },
 });
 

@@ -4,7 +4,6 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   FlatList,
   TouchableOpacity,
   StyleSheet,
@@ -12,6 +11,8 @@ import {
   Switch,
   ScrollView,
 } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
+
 import * as SecureStore from "expo-secure-store";
 import { Picker } from "@react-native-picker/picker";
 
@@ -31,7 +32,7 @@ interface AppSettings {
 
 const CREDENTIALS_KEY = "app_credentials";
 const SETTINGS_KEY = "app_settings";
-const CLASS_FILTER_KEY = "class_filter";
+const CLASS_FILTERS_KEY = "class_filters";
 
 export default function ProfileSettingsScreen() {
   // Credentials state
@@ -49,7 +50,8 @@ export default function ProfileSettingsScreen() {
   });
 
   // Class filter state
-  const [classFilter, setClassFilter] = useState("");
+  const [classFilters, setClassFilters] = useState<string[]>([]);
+  const [newClassFilter, setNewClassFilter] = useState(""); 
 
   // Load credentials, settings, and classFilter on mount
   useEffect(() => {
@@ -61,8 +63,8 @@ export default function ProfileSettingsScreen() {
         const settingsData = await SecureStore.getItemAsync(SETTINGS_KEY);
         if (settingsData) setSettings(JSON.parse(settingsData));
 
-        const filterData = await SecureStore.getItemAsync(CLASS_FILTER_KEY);
-        if (filterData) setClassFilter(filterData);
+        const filterData = await SecureStore.getItemAsync(CLASS_FILTERS_KEY);
+        if (filterData) setClassFilters(JSON.parse(filterData));
       } catch (e) {
         console.error(
           "--- FEHLER: Daten konnten nicht geladen werden ---\n",
@@ -107,7 +109,10 @@ export default function ProfileSettingsScreen() {
   useEffect(() => {
     (async () => {
       try {
-        await SecureStore.setItemAsync(CLASS_FILTER_KEY, classFilter);
+        await SecureStore.setItemAsync(
+          CLASS_FILTERS_KEY,
+          JSON.stringify(classFilters)
+        );
       } catch (e) {
         console.error(
           "--- FEHLER: Klassenfilter konnte nicht gespeichert werden ---\n",
@@ -115,7 +120,7 @@ export default function ProfileSettingsScreen() {
         );
       }
     })();
-  }, [classFilter]);
+  }, [classFilters]);
 
   // Credential handlers
   const handleAddCredential = () => {
@@ -144,6 +149,19 @@ export default function ProfileSettingsScreen() {
   // Settings handlers
   const toggleSetting = (key: keyof AppSettings) => (value: boolean) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+
+  const handleAddFilter = () => {
+    const f = newClassFilter.trim();
+    if (f && !classFilters.includes(f)) {
+      setClassFilters([...classFilters, f]);
+    }
+    setNewClassFilter("");
+  };
+
+  const handleRemoveFilter = (filter: string) => {
+    setClassFilters(classFilters.filter((f) => f !== filter));
   };
 
   return (
@@ -180,7 +198,10 @@ export default function ProfileSettingsScreen() {
         secureTextEntry
         style={[styles.input, settings.darkMode && styles.darkInput]}
       />
-      <Button title="Login hinzufügen" onPress={handleAddCredential} />
+      <TouchableOpacity onPress={handleAddCredential}>
+        <Text style={styles.addButtonText}>Login hinzufügen</Text>
+      </TouchableOpacity>
+
       <FlatList
         data={credentials}
         keyExtractor={(item) => item.id}
@@ -195,7 +216,10 @@ export default function ProfileSettingsScreen() {
                 {item.username}
               </Text>
             </View>
-            <TouchableOpacity onPress={() => handleDeleteCredential(item.id)}>
+            <TouchableOpacity
+              onPress={() => handleDeleteCredential(item.id)}
+              style={styles.addButton}
+            >
               <Text style={styles.delete}>Löschen</Text>
             </TouchableOpacity>
           </View>
@@ -229,16 +253,42 @@ export default function ProfileSettingsScreen() {
         Vertretungsplan
       </Text>
 
-      <View style={styles.row}>
-        <Text style={settings.darkMode && styles.darkText}>Standardfilter</Text>
+      <Text style={[styles.sectionTitle, settings.darkMode && styles.darkText]}>
+        Standardfilter
+      </Text>
+
+      <View style={styles.filterInputRow}>
         <TextInput
-          style={[styles.input, settings.darkMode && styles.darkInput]}
-          placeholder="Klassenfilter"
+          style={[
+            styles.input,
+            settings.darkMode && styles.darkInput,
+            { flex: 1 },
+          ]}
+          placeholder="Neue Klasse"
           placeholderTextColor={settings.darkMode ? "#aaa" : "#666"}
-          value={classFilter}
-          onChangeText={setClassFilter}
+          value={newClassFilter}
+          onChangeText={setNewClassFilter}
         />
+
+        <TouchableOpacity style={styles.addButton} onPress={handleAddFilter}>
+          <Text style={styles.addButtonText}>Hinzufügen</Text>
+        </TouchableOpacity>
       </View>
+
+      <FlatList
+        data={classFilters}
+        horizontal
+        keyExtractor={(item) => item}
+        contentContainerStyle={styles.filterList}
+        renderItem={({ item }) => (
+          <View style={styles.filterChip}>
+            <Text style={styles.filterText}>{item}</Text>
+            <TouchableOpacity onPress={() => handleRemoveFilter(item)}>
+              <FontAwesome name="trash" size={16} color="red" />
+            </TouchableOpacity>
+          </View>
+        )}
+      />
 
       <View style={styles.row}>
         <Text style={settings.darkMode && styles.darkText}>
@@ -259,7 +309,9 @@ export default function ProfileSettingsScreen() {
       </View>
 
       <View style={styles.row}>
-        <Text style={settings.darkMode && styles.darkText}>Gruppierung von Klassen</Text>
+        <Text style={settings.darkMode && styles.darkText}>
+          Gruppierung von Klassen
+        </Text>
         <Switch
           value={settings.groupClasses}
           onValueChange={toggleSetting("groupClasses")}
@@ -303,4 +355,41 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   darkText: { color: "#fff" },
+  filterInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  filterList: {
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#eee",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginHorizontal: 4,
+  },
+  filterText: {
+    fontSize: 14,
+  },
+  removeText: {
+    marginLeft: 6,
+    fontSize: 16,
+    color: "red",
+  },
+  addButton: {
+    backgroundColor: "#4F6D7A",
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginLeft: 8,
+  },
+  addButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
 });

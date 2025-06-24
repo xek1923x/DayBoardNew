@@ -38,6 +38,7 @@ export default function MyCalendar() {
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1
   });
+  
 
   // Picker visibility & temp values
   const [pickerVisible, setPickerVisible] = useState({ date: false, time: false });
