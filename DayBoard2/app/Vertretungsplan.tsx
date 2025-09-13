@@ -12,7 +12,7 @@ import {
   Platform,
   TouchableOpacity,
 } from "react-native";
-import { setCrawlerCookie, login, getData as fetchPlanHtml } from "./crawler";
+import { loginToDSBMobile } from "./crawler";
 import * as SecureStore from "expo-secure-store";
 
 export default function Stundenplan() {
@@ -60,10 +60,8 @@ export default function Stundenplan() {
   const fetchEntriesCrawler = async () => {
     setLoading(true);
     try {
-      setCrawlerCookie("");
-      await login(YOUR_USER, YOUR_PASS);
-      const html = await fetchPlanHtml();
-      setEntries(parseEntriesFromHtml(html));
+      await loginToDSBMobile(YOUR_USER, YOUR_PASS);
+      
     } catch {
       setEntries([]);
     } finally {

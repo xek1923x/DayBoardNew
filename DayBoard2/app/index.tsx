@@ -16,7 +16,7 @@ import { Calendar } from 'react-native-calendars';
 import * as SecureStore from 'expo-secure-store';
 
 // Helper to format a date string for display
-const formatDate = date =>
+const formatDate = (date: Date) =>
   date.toLocaleDateString('de-DE', {
     year: 'numeric',
     month: 'long',
@@ -83,7 +83,7 @@ export default function MyCalendar() {
   }, [eventsByDate]);
 
   // Show/hide picker
-  function openPicker(mode) {
+  function openPicker(mode: React.SetStateAction<string>) {
     setPickerMode(mode);
     setTempValue(
       mode === 'date' && selectedDate
@@ -118,7 +118,8 @@ export default function MyCalendar() {
       end: endTime,
       type: selectedType,
       repeat: selectedRepeat,
-      date: selectedDate
+      date: selectedDate,
+      completed: false,
     };
     const updated = { ...eventsByDate };
     if (!updated[selectedDate]) updated[selectedDate] = [];

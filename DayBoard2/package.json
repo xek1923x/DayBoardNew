@@ -24,7 +24,7 @@
     "cheerio-without-node-native": "^0.20.2",
     "date-fns": "^4.1.0",
     "datetimepicker": "^0.1.39",
-    "expo": "^53.0.11",
+    "expo": "^54.0.6",
     "expo-blur": "~14.1.4",
     "expo-constants": "^16.0.2",
     "expo-font": "~13.3.1",
