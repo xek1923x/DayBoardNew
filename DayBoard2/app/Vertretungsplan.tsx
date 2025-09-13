@@ -15,7 +15,7 @@ import {
 import { loginToDSBMobile } from "./crawler";
 import * as SecureStore from "expo-secure-store";
 
-export default function Stundenplan() {
+export default function Vertretungsplan() {
   const [entries, setEntries] = useState<any[]>([]);
   const [klassFilter, setKlassFilter] = useState("");
   const [teacherFilter, setTeacherFilter] = useState("");
