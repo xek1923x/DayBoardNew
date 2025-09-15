@@ -22,7 +22,7 @@ export default function RootLayout() {
          />
 
           <Tabs.Screen
-            name="Vertretungsplan"
+            name="vertretungsplan"
             options={{
                title: 'Vertretungsplan',
                tabBarIcon: ({ color }) => <FontAwesome size={25} name="table" color={color} />

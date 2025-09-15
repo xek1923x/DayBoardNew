@@ -15,7 +15,7 @@ import {
 import { loginToDSBMobile } from "./crawler";
 import * as SecureStore from "expo-secure-store";
 
-export default function Vertretungsplan() {
+export default function vertretungsplan() {
   const [entries, setEntries] = useState<any[]>([]);
   const [klassFilter, setKlassFilter] = useState("");
   const [teacherFilter, setTeacherFilter] = useState("");
